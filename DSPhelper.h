@@ -1,12 +1,36 @@
+/**
+ * @file DSPhelper.h
+ * @author J. Bitzer @ Jade Hochschule
+ * @brief Helper for filter design from analog to digital domain (bilinear, Lp->LP, LP->HP)
+ * Only for first and second order filters
+ * @version 0.1
+ * @date 2021-01-11
+ * 
+ * @copyright Copyright (c) 2021  (BSD Licence)
+ * 
+ */
 #pragma once
 
-#define _USE_MATH_DEFINES
+#ifndef _USE_MATH_DEFINES
+	#define _USE_MATH_DEFINES
+#endif
 #include <cmath>
 #include <vector>
 #ifndef M_PI
 	#define M_PI 3.14159265358979323846
 #endif
-
+/**
+ * @brief bilinearTransform transforms analog coeficients to their digital equivalents.
+ * This function works for first and second order section filters only
+ * @param d : the numerator of the analog systemfunction H(s) 
+ * @param c : the denominator of the analog systemfunction H(s)
+ * @param b : output var: the numerator of the resulting digital systemfunction H(z) 
+ * @param a : outpu var: the denominator of the analog systemfunction H(s)
+ * @param sampleRate : the samplerate in Hz for the design
+ * @param fcut : the cutoff frequency in Hz of the filter 
+ * @return int : error code : -1 and -2 if the analog filters have the wrong length
+ *                            0 = OK
+ */
 int bilinearTransform(const std::vector<double>& d, const std::vector<double>& c,
 	std::vector<double>& b, std::vector<double>& a,
 	const double sampleRate, const double fcut)
@@ -43,8 +67,18 @@ int bilinearTransform(const std::vector<double>& d, const std::vector<double>& c
 		a[2] = (c[0]*K*K - c[1]*K + c[2]) * Norm;
 		a[0] = 1.0;
 	}
+	return 0;
 }
-
+/**
+ * @brief denormalizing transfrom for lowpass design (first and second order only)
+ * 
+ * @param dnorm : normalized numerator input analog coeffs (cutoff omega = 1)
+ * @param cnorm : normalized denominator input analog coeffs (cutoff omega = 1)
+ * @param d : output var: the denormalized coeffs
+ * @param c  output var: the denormalized coeffs
+ * @param fcut : the cutoff frequenvy in Hz
+ * @return int ; -1 and -2 if the length is wrong,  0 = OK
+ */
 int LowpassLowpassTransform(const std::vector<double>& dnorm, const std::vector<double>& cnorm,
 	std::vector<double>& d, std::vector<double>& c, const double fcut)
 {
@@ -76,9 +110,18 @@ int LowpassLowpassTransform(const std::vector<double>& dnorm, const std::vector<
 		c[1] = cnorm[1] * om;
 		c[2] = cnorm[2] * om * om;
 	}
+	return 0;
 }
-
-
+/**
+ * @brief denormalizing transfrom for highpass design (first and second order only)
+ * 
+ * @param dnorm : normalized numerator input analog coeffs (cutoff omega = 1)
+ * @param cnorm : normalized denominator input analog coeffs (cutoff omega = 1)
+ * @param d : output var: the denormalized coeffs
+ * @param c  output var: the denormalized coeffs
+ * @param fcut : the cutoff frequenvy in Hz
+ * @return int ; -1 and -2 if the length is wrong,  0 = OK
+ */
 int LowpassHighpassTransform(const std::vector<double>& dnorm, const std::vector<double>& cnorm,
 	std::vector<double>& d, std::vector<double>& c, const double fcut)
 {
@@ -91,8 +134,6 @@ int LowpassHighpassTransform(const std::vector<double>& dnorm, const std::vector
 
 	c.resize(cnorm.size());
 	d.resize(dnorm.size());
-
-
 
 	if (dnorm.size() == 2)
 	{
@@ -111,8 +152,6 @@ int LowpassHighpassTransform(const std::vector<double>& dnorm, const std::vector
 		c[2] = cnorm[0] * om * om;
 	}
 }
-
-
 
 /*
 Testcode for a second order butterworth filter 
