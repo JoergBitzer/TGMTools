@@ -14,7 +14,7 @@
 #include "JadeLookAndFeel.h"
 PresetHandler::PresetHandler()
 	: Categories({"Unknown", "Lead", "Brass", "Template", "Bass",
-	"Keys", "Organ" , "Pad", "Drums_Perc", "SpecialEffect", "Strings" })
+	"Key", "Organ" , "Pad", "Drums_Perc", "SpecialEffect","Sequence", "String" })
 {
 }
 
@@ -93,6 +93,9 @@ File PresetHandler::getUserPresetsFolder()
 
 #endif
 	rootFolder = rootFolder.getChildFile(JucePlugin_Manufacturer).getChildFile(JucePlugin_Name);
+
+	auto lala = rootFolder.getFileName();
+
 	Result res = rootFolder.createDirectory(); // creates if not existing
 	return rootFolder;
 }
@@ -102,7 +105,7 @@ File PresetHandler::getFactoryPresetsFolder()
 	File rootFolder = File::getSpecialLocation(File::SpecialLocationType::commonApplicationDataDirectory);
 
 #if JUCE_MAC
-	rootFolder = rootFolder.getChildFile(“Audio”).getChildFile(“Presets”);
+	rootFolder = rootFolder.getChildFile(ï¿½Audioï¿½).getChildFile(ï¿½Presetsï¿½);
 #endif
 	rootFolder = rootFolder.getChildFile(JucePlugin_Manufacturer).getChildFile(JucePlugin_Name);
 	Result res = rootFolder.createDirectory();
@@ -237,6 +240,9 @@ PresetComponent::PresetComponent(PresetHandler& ph)
 
 void PresetComponent::paint(Graphics & g)
 {
+	if (m_hidecategory)
+		m_categoriesCombo.setVisible(false);
+
 	g.fillAll(JadeGray);
 	if (m_somethingchanged)
 		m_saveButton.setColour(TextButton::ColourIds::buttonColourId, JadeRed);
@@ -267,6 +273,8 @@ void PresetComponent::resized()
 	auto r = getBounds();
 	auto s = r.removeFromRight(3*COMBO_WITH / 4 + ELEMENT_DIST);
 	m_categoriesCombo.setBounds(s.getX(), 3, 3*COMBO_WITH / 4, ELEMENT_HEIGHT);
+	if (m_hidecategory)
+		m_categoriesCombo.setVisible(false);
 
 }
 
@@ -382,8 +390,8 @@ void PresetComponent::categorychanged()
 ToDO:
 
 1) Factory Presets einbauen (vermutlich am Besten ueber RAM, also im Produjucer einpflegen)
-2) Combobox für mehr Presets (entweder showPopup() überladen) oder mit Sub-Menus
-getRootMenu()->addSubMenu(). (Mit Banks wäre das einfach (Eine Factory Bank mit 32 festen Presets 
-und 7 andere Banks für User Presets))
+2) Combobox fï¿½r mehr Presets (entweder showPopup() ï¿½berladen) oder mit Sub-Menus
+getRootMenu()->addSubMenu(). (Mit Banks wï¿½re das einfach (Eine Factory Bank mit 32 festen Presets 
+und 7 andere Banks fï¿½r User Presets))
 
 */
