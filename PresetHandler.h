@@ -47,9 +47,16 @@ public:
 	{
 		return m_presetList.count(name);
 	}
+
+// new methods for categories
+	void addCategory(String newCat);
+	bool gethasCategories(){return hasCategories;};
+
 private:
 	AudioProcessorValueTreeState* m_vts;
 	std::map <String, ValueTree> m_presetList;
+	std::vector<String> m_categoryList;
+	bool hasCategories;
 };
 
 class PresetComponent : public Component

@@ -14,8 +14,19 @@
 #include "JadeLookAndFeel.h"
 PresetHandler::PresetHandler()
 	: Categories({"Unknown", "Lead", "Brass", "Template", "Bass",
-	"Key", "Organ" , "Pad", "Drums_Perc", "SpecialEffect","Sequence", "String" })
+	"Key", "Organ" , "Pad", "Drums_Perc", "SpecialEffect","Sequence", "String" }),hasCategories(false)
 {
+	m_categoryList.push_back("None"); // default is None
+}
+void PresetHandler::addCategory(String newCat)
+{
+	if (hasCategories == false)
+	{
+		m_categoryList.pop_back();
+		hasCategories = true;
+	}
+	m_categoryList.push_back(newCat);
+
 }
 
 int PresetHandler::setAudioValueTreeState(AudioProcessorValueTreeState* vts)
@@ -123,8 +134,10 @@ int PresetHandler::savePreset(String name, String category)
 		foXML.truncate();
 	}
 
+	m_vts->state.setProperty("version", JucePlugin_VersionString, nullptr);
 	m_vts->state.setProperty("presetname", name, nullptr);
 	m_vts->state.setProperty("category", category, nullptr);
+
 
 	auto state = m_vts->copyState();
 	std::unique_ptr<XmlElement> xml(state.createXml());
@@ -193,8 +206,11 @@ int PresetHandler::getAllKeys(std::vector<String>& keys)
 		//String cat = vt.getProperty("category");
 
 PresetComponent::PresetComponent(PresetHandler& ph)
-	:m_presetHandler(ph), m_somethingchanged(false), m_hidecategory(false)
+	:m_presetHandler(ph), m_somethingchanged(false)
 {
+	bool hasCat = m_presetHandler.gethasCategories();
+	m_hidecategory = !hasCat;
+
 	m_nextButton.setButtonText("Next");
 	m_nextButton.setColour(TextButton::ColourIds::buttonColourId,JadeGray);
 	m_nextButton.onClick = [this]() {nextButtonClick(); };
@@ -252,7 +268,7 @@ void PresetComponent::paint(Graphics & g)
 		m_saveButton.setColour(TextButton::ColourIds::buttonColourId, JadeGray);
 	}
 }
-#define COMBO_WITH 150
+#define COMBO_WITH 70
 #define ELEMENT_DIST 10
 #define BUTTON_WIDTH 40
 #define ELEMENT_HEIGHT 20
