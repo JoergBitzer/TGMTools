@@ -12,10 +12,23 @@
 
 #include "PresetHandler.h"
 #include "JadeLookAndFeel.h"
+//PresetHandler::PresetHandler()
+//	: Categories({"Unknown", "Lead", "Brass", "Template", "Bass",
+//	"Key", "Organ" , "Pad", "Drums_Perc", "SpecialEffect","Sequence", "String" }),hasCategories(false)
 PresetHandler::PresetHandler()
-	: Categories({"Unknown", "Lead", "Brass", "Template", "Bass",
-	"Keys", "Organ" , "Pad", "Drums_Perc", "SpecialEffect", "Strings" })
+	:hasCategories(false)
 {
+	m_categoryList.push_back("None"); // default is None
+}
+void PresetHandler::addCategory(String newCat)
+{
+	if (hasCategories == false)
+	{
+		m_categoryList.pop_back();
+		hasCategories = true;
+	}
+	m_categoryList.push_back(newCat);
+
 }
 
 int PresetHandler::setAudioValueTreeState(AudioProcessorValueTreeState* vts)
@@ -93,6 +106,9 @@ File PresetHandler::getUserPresetsFolder()
 
 #endif
 	rootFolder = rootFolder.getChildFile(JucePlugin_Manufacturer).getChildFile(JucePlugin_Name);
+
+	auto lala = rootFolder.getFileName();
+
 	Result res = rootFolder.createDirectory(); // creates if not existing
 	return rootFolder;
 }
@@ -102,7 +118,7 @@ File PresetHandler::getFactoryPresetsFolder()
 	File rootFolder = File::getSpecialLocation(File::SpecialLocationType::commonApplicationDataDirectory);
 
 #if JUCE_MAC
-	rootFolder = rootFolder.getChildFile(“Audio”).getChildFile(“Presets”);
+	rootFolder = rootFolder.getChildFile(ï¿½Audioï¿½).getChildFile(ï¿½Presetsï¿½);
 #endif
 	rootFolder = rootFolder.getChildFile(JucePlugin_Manufacturer).getChildFile(JucePlugin_Name);
 	Result res = rootFolder.createDirectory();
@@ -120,8 +136,10 @@ int PresetHandler::savePreset(String name, String category)
 		foXML.truncate();
 	}
 
+	m_vts->state.setProperty("version", JucePlugin_VersionString, nullptr);
 	m_vts->state.setProperty("presetname", name, nullptr);
 	m_vts->state.setProperty("category", category, nullptr);
+
 
 	auto state = m_vts->copyState();
 	std::unique_ptr<XmlElement> xml(state.createXml());
@@ -190,8 +208,11 @@ int PresetHandler::getAllKeys(std::vector<String>& keys)
 		//String cat = vt.getProperty("category");
 
 PresetComponent::PresetComponent(PresetHandler& ph)
-	:m_presetHandler(ph), m_somethingchanged(false), m_hidecategory(false)
+	:m_presetHandler(ph), m_somethingchanged(false)
 {
+	bool hasCat = m_presetHandler.gethasCategories();
+	m_hidecategory = !hasCat;
+
 	m_nextButton.setButtonText("Next");
 	m_nextButton.setColour(TextButton::ColourIds::buttonColourId,JadeGray);
 	m_nextButton.onClick = [this]() {nextButtonClick(); };
@@ -224,7 +245,7 @@ PresetComponent::PresetComponent(PresetHandler& ph)
 	addAndMakeVisible(m_presetCombo);
 
 	id = 1;
-	for (auto cat : ph.Categories)
+	for (auto cat : m_presetHandler.m_categoryList)
 		m_categoriesCombo.addItem(cat,id++);
 
 	m_categoriesCombo.setSelectedItemIndex(0, false);
@@ -237,6 +258,9 @@ PresetComponent::PresetComponent(PresetHandler& ph)
 
 void PresetComponent::paint(Graphics & g)
 {
+	if (m_hidecategory)
+		m_categoriesCombo.setVisible(false);
+
 	g.fillAll(JadeGray);
 	if (m_somethingchanged)
 		m_saveButton.setColour(TextButton::ColourIds::buttonColourId, JadeRed);
@@ -267,6 +291,8 @@ void PresetComponent::resized()
 	auto r = getBounds();
 	auto s = r.removeFromRight(3*COMBO_WITH / 4 + ELEMENT_DIST);
 	m_categoriesCombo.setBounds(s.getX(), 3, 3*COMBO_WITH / 4, ELEMENT_HEIGHT);
+	if (m_hidecategory)
+		m_categoriesCombo.setVisible(false);
 
 }
 
@@ -346,7 +372,7 @@ void PresetComponent::itemchanged()
 	String cat = vt.getProperty("category");
 
 	int catid = 0;
-	for (auto ca : m_presetHandler.Categories)
+	for (auto ca : m_presetHandler.m_categoryList)
 	{
 		if (ca == cat)
 			break;
@@ -382,8 +408,8 @@ void PresetComponent::categorychanged()
 ToDO:
 
 1) Factory Presets einbauen (vermutlich am Besten ueber RAM, also im Produjucer einpflegen)
-2) Combobox für mehr Presets (entweder showPopup() überladen) oder mit Sub-Menus
-getRootMenu()->addSubMenu(). (Mit Banks wäre das einfach (Eine Factory Bank mit 32 festen Presets 
-und 7 andere Banks für User Presets))
+2) Combobox fï¿½r mehr Presets (entweder showPopup() ï¿½berladen) oder mit Sub-Menus
+getRootMenu()->addSubMenu(). (Mit Banks wï¿½re das einfach (Eine Factory Bank mit 32 festen Presets 
+und 7 andere Banks fï¿½r User Presets))
 
 */
