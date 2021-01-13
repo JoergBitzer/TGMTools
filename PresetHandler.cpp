@@ -6,12 +6,16 @@
     Author:  bitzer
 
 	// Version 1.0.1 18.06.20 JB: color in save button changed to jadeGrey and JadeRed
-	// new dependency from JadeLookAndFeel
+								  new dependency from JadeLookAndFeel
+	// Version 1.1 11.02.20 JB: Added Handling of Factory presets, 
+								changed how to create categories (more flexibel)
+								automation of category combobox, if no categories are set
   ==============================================================================
 */
 
 #include "PresetHandler.h"
 #include "JadeLookAndFeel.h"
+// #include "BinaryData.h"
 //PresetHandler::PresetHandler()
 //	: Categories({"Unknown", "Lead", "Brass", "Template", "Bass",
 //	"Key", "Organ" , "Pad", "Drums_Perc", "SpecialEffect","Sequence", "String" }),hasCategories(false)
@@ -97,7 +101,7 @@ int PresetHandler::deletePreset(ValueTree & newpreset)
 }
 
 
-File PresetHandler::getUserPresetsFolder() 
+File PresetHandler::getUserPresetsFolder(bool &wasCreated) 
 {
 	File rootFolder = File::getSpecialLocation(File::SpecialLocationType::userApplicationDataDirectory);
 #ifdef JUCE_MAC
@@ -108,6 +112,10 @@ File PresetHandler::getUserPresetsFolder()
 	rootFolder = rootFolder.getChildFile(JucePlugin_Manufacturer).getChildFile(JucePlugin_Name);
 
 	auto lala = rootFolder.getFileName();
+
+	wasCreated = !rootFolder.isDirectory();
+
+	//bool wasCreated = !exists;
 
 	Result res = rootFolder.createDirectory(); // creates if not existing
 	return rootFolder;
@@ -127,7 +135,8 @@ File PresetHandler::getFactoryPresetsFolder()
 
 int PresetHandler::savePreset(String name, String category)
 {
-	File outfiledir = getUserPresetsFolder();
+	bool wasCreated;
+	File outfiledir = getUserPresetsFolder(wasCreated);
 	File outfileXML = outfiledir.getChildFile(name+".xml");
 	FileOutputStream foXML(outfileXML);
 	if (foXML.openedOk())
@@ -149,7 +158,8 @@ int PresetHandler::savePreset(String name, String category)
 
 ValueTree PresetHandler::loadPreset(String name)
 {
-	File infiledir = getUserPresetsFolder();
+	bool wasCreated;
+	File infiledir = getUserPresetsFolder(wasCreated);
 	File infileXML = infiledir.getChildFile(name + ".xml");
 
 	//File settingsFile2("c:\\AudioDev\\init.xml");
@@ -173,7 +183,8 @@ int PresetHandler::loadPresetAndActivate(String name)
 
 int PresetHandler::deletePresetFile(String name)
 {
-	File outfiledir = getUserPresetsFolder();
+	bool wasCreated;
+	File outfiledir = getUserPresetsFolder(wasCreated);
 	File outfileXML = outfiledir.getChildFile(name + ".xml");
 	outfileXML.deleteFile();
 	return 0;
@@ -181,7 +192,8 @@ int PresetHandler::deletePresetFile(String name)
 
 int PresetHandler::loadAllUserPresets()
 {
-	File outfiledir = getUserPresetsFolder();
+	bool wasCreated;
+	File outfiledir = getUserPresetsFolder(wasCreated);
 	auto files = outfiledir.findChildFiles(File::findFiles, true, "*.xml");
 	if (files.isEmpty() == true)
 	{
@@ -203,9 +215,35 @@ int PresetHandler::getAllKeys(std::vector<String>& keys)
 	}
 	return 0;
 }
+void PresetHandler::DeployFactoryPresets()
+{
+	bool wasCreated;
+	File outfiledir = getUserPresetsFolder(wasCreated);
+	if (wasCreated == false)
+		return;
 
-//auto files = File{ "/Users/name/Programming/pluging/presets" }.findChildFiles(File::findFiles, true, "empty.xml");
-		//String cat = vt.getProperty("category");
+	auto namesofbinarydata = BinaryData::namedResourceList;
+	auto sizesofbinarydata = BinaryData::namedResourceListSize;
+	for (auto kk = 0; kk < sizesofbinarydata;++kk)
+	{
+		auto binname = namesofbinarydata[kk];
+		int sizeData;
+		auto data = BinaryData::getNamedResource(binname, sizeData);
+
+		std::unique_ptr<XmlElement> xml2(XmlDocument::parse(data));
+		ValueTree vt;
+		if (sizeData != 0 && xml2 != nullptr)
+		{
+			vt = ValueTree::fromXml(*xml2);
+
+			m_vts->replaceState(vt);
+			String name = vt.getProperty("presetname");
+			String category = vt.getProperty("category");
+			addOrChangeCurrentPreset(name, category);
+		}
+	}
+}
+
 
 PresetComponent::PresetComponent(PresetHandler& ph)
 	:m_presetHandler(ph), m_somethingchanged(false)
@@ -252,7 +290,10 @@ PresetComponent::PresetComponent(PresetHandler& ph)
 	m_categoriesCombo.onChange = [this]() {categorychanged(); };
 	addAndMakeVisible(m_categoriesCombo);
 
-	itemchanged();
+	//getRootMenu()->addSubMenu(). for submenus in the preset combo
+
+
+	// itemchanged();
 	m_somethingchanged = false;
 }
 
@@ -277,12 +318,6 @@ void PresetComponent::paint(Graphics & g)
 void PresetComponent::resized()
 {
 	m_presetCombo.setBounds(getWidth() / 2 - COMBO_WITH / 2, 3, COMBO_WITH, ELEMENT_HEIGHT);
-	if (m_hidecategory)
-		m_categoriesCombo.setVisible(false);
-
-	m_categoriesCombo.setBounds(getWidth() / 2 + COMBO_WITH / 2 + 2*BUTTON_WIDTH + 3*ELEMENT_DIST, 3, COMBO_WITH/2, ELEMENT_HEIGHT);
-	if (m_hidecategory)
-		m_categoriesCombo.setVisible(false);
 
 	m_nextButton.setBounds(getWidth() / 2 + COMBO_WITH / 2 + ELEMENT_DIST/2, 3, BUTTON_WIDTH, ELEMENT_HEIGHT);
 	m_saveButton.setBounds(getWidth() / 2 + COMBO_WITH / 2 + 2*ELEMENT_DIST + BUTTON_WIDTH, 3, BUTTON_WIDTH, ELEMENT_HEIGHT);
@@ -344,6 +379,7 @@ void PresetComponent::prevButtonClick()
 
 void PresetComponent::itemchanged()
 {
+	repaint();
 	int id = m_presetCombo.getSelectedItemIndex();
 	String itemname;
 	if (id == -1)
@@ -357,7 +393,7 @@ void PresetComponent::itemchanged()
 	bool isKey =m_presetHandler.isAlreadyAPreset(itemname);
 	if (isKey == false)
 	{
-		m_somethingchanged = true;
+		m_somethingchanged = false;
 		repaint();
 		m_categoriesCombo.setSelectedItemIndex(0, false);
 		m_presetHandler.addOrChangeCurrentPreset(itemname);
@@ -382,6 +418,7 @@ void PresetComponent::itemchanged()
 	m_oldcatname = m_categoriesCombo.getItemText(catid);
 	m_presetHandler.loadPresetAndActivate(itemname);
 	m_somethingchanged = false;
+
 }
 
 void PresetComponent::categorychanged()

@@ -30,7 +30,7 @@ public:
 	int changePresetCategory(String name, String category);
 
 	int deletePreset(ValueTree& newpreset);
-	File getUserPresetsFolder();
+	File getUserPresetsFolder(bool & wasCreated);
 	File getFactoryPresetsFolder();
 	int savePreset(String name, String category = "Unknown");
 	ValueTree loadPreset(String name);
@@ -52,7 +52,10 @@ public:
 	void addCategory(String newCat);
 	bool gethasCategories(){return hasCategories;};
 	std::vector<String> m_categoryList;
-	
+
+// Factory Presets 
+	void DeployFactoryPresets();
+
 private:
 	AudioProcessorValueTreeState* m_vts;
 	std::map <String, ValueTree> m_presetList;
