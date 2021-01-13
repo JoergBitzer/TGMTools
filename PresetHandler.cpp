@@ -270,7 +270,7 @@ void PresetComponent::paint(Graphics & g)
 		m_saveButton.setColour(TextButton::ColourIds::buttonColourId, JadeGray);
 	}
 }
-#define COMBO_WITH 70
+#define COMBO_WITH 150
 #define ELEMENT_DIST 10
 #define BUTTON_WIDTH 40
 #define ELEMENT_HEIGHT 20
