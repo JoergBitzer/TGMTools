@@ -18,7 +18,7 @@
 class PresetHandler
 {
 public:
-	const std::vector<std::string> Categories;
+//	const std::vector<std::string> Categories;
 
 
 	PresetHandler();
@@ -51,11 +51,12 @@ public:
 // new methods for categories
 	void addCategory(String newCat);
 	bool gethasCategories(){return hasCategories;};
-
+	std::vector<String> m_categoryList;
+	
 private:
 	AudioProcessorValueTreeState* m_vts;
 	std::map <String, ValueTree> m_presetList;
-	std::vector<String> m_categoryList;
+
 	bool hasCategories;
 };
 

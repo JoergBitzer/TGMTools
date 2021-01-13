@@ -12,9 +12,11 @@
 
 #include "PresetHandler.h"
 #include "JadeLookAndFeel.h"
+//PresetHandler::PresetHandler()
+//	: Categories({"Unknown", "Lead", "Brass", "Template", "Bass",
+//	"Key", "Organ" , "Pad", "Drums_Perc", "SpecialEffect","Sequence", "String" }),hasCategories(false)
 PresetHandler::PresetHandler()
-	: Categories({"Unknown", "Lead", "Brass", "Template", "Bass",
-	"Key", "Organ" , "Pad", "Drums_Perc", "SpecialEffect","Sequence", "String" }),hasCategories(false)
+	:hasCategories(false)
 {
 	m_categoryList.push_back("None"); // default is None
 }
@@ -243,7 +245,7 @@ PresetComponent::PresetComponent(PresetHandler& ph)
 	addAndMakeVisible(m_presetCombo);
 
 	id = 1;
-	for (auto cat : ph.Categories)
+	for (auto cat : m_presetHandler.m_categoryList)
 		m_categoriesCombo.addItem(cat,id++);
 
 	m_categoriesCombo.setSelectedItemIndex(0, false);
@@ -370,7 +372,7 @@ void PresetComponent::itemchanged()
 	String cat = vt.getProperty("category");
 
 	int catid = 0;
-	for (auto ca : m_presetHandler.Categories)
+	for (auto ca : m_presetHandler.m_categoryList)
 	{
 		if (ca == cat)
 			break;
