@@ -46,7 +46,7 @@ public:
 	int deletePreset(ValueTree& newpreset);
 	File getUserPresetsFolder(bool & wasCreated);
 	File getFactoryPresetsFolder();
-	int savePreset(String name, String category = "Unknown");
+	int savePreset(String name, String category = "Unknown", String bank = "User");
 	int savePreset(ValueTree& vt);
 	ValueTree loadPreset(String name);
 	int loadPresetAndActivate(String name);

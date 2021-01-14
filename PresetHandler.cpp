@@ -64,7 +64,7 @@ int PresetHandler::addOrChangeCurrentPreset(String name, String category, String
 
 	auto state = m_vts->copyState();
 	m_presetList.insert_or_assign(name, state);
-	savePreset(name, category);
+	savePreset(name, category, bank);
 
 	return 0;
 }
@@ -87,9 +87,8 @@ ValueTree PresetHandler::getPreset(String name)
 int PresetHandler::changePreset(ValueTree& newpreset)
 {
 	String name = newpreset.getProperty("presetname");
-	String cat = newpreset.getProperty("category");
 	m_presetList.insert_or_assign(name, newpreset);
-	savePreset(name, cat);
+	savePreset(newpreset);
 	return 0;
 }
 
@@ -142,7 +141,7 @@ File PresetHandler::getFactoryPresetsFolder()
 	return rootFolder;
 }
 
-int PresetHandler::savePreset(String name, String category)
+int PresetHandler::savePreset(String name, String category, String bank)
 {
 	bool wasCreated;
 	File outfiledir = getUserPresetsFolder(wasCreated);
@@ -157,7 +156,7 @@ int PresetHandler::savePreset(String name, String category)
 	m_vts->state.setProperty("version", JucePlugin_VersionString, nullptr);
 	m_vts->state.setProperty("presetname", name, nullptr);
 	m_vts->state.setProperty("category", category, nullptr);
-
+	m_vts->state.setProperty("bank", bank, nullptr);
 
 	auto state = m_vts->copyState();
 	std::unique_ptr<XmlElement> xml(state.createXml());
@@ -389,7 +388,7 @@ void PresetComponent::savePreset()
 	else
 		itemname = m_presetCombo.getItemText(id);
 
-
+	
 	m_presetHandler.savePreset(itemname, catname);
 	m_somethingchanged = false;
 	repaint();
