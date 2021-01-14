@@ -29,6 +29,9 @@ const auto JadeLightRed2(Colour::fromFloatRGBA(0.968627450980392, 0.733333333333
 const auto JadeLightRed3(Colour::fromFloatRGBA(0.980392156862745, 0.807843137254902, 0.776470588235294, 1.0));
 // JadeLightRed4 = [0.988235294117647 0.890196078431373 0.870588235294118];
 
+// Category Lists for different usage (max number of Cat is 20);
+const StringArray JadeSynthCategories("Unknown", "Lead", "Brass", "Template", "Bass",
+	"Key", "Organ" , "Pad", "Drums_Perc", "SpecialEffect","Sequence", "String" );
 /**
  * @brief the Look and Feel implements the rotary knob in a special way
  * 
