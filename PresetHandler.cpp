@@ -4,36 +4,44 @@
     PresetHandler.cpp
     Created: 3 Jun 2020 11:35:05am
     Author:  bitzer
-
-	// Version 1.0.1 18.06.20 JB: color in save button changed to jadeGrey and JadeRed
-								  new dependency from JadeLookAndFeel
-	// Version 1.1 11.02.20 JB: Added Handling of Factory presets, 
-								changed how to create categories (more flexibel)
-								automation of category combobox, if no categories are set
-  ==============================================================================
+ ==============================================================================
 */
 
 #include "PresetHandler.h"
 #include "JadeLookAndFeel.h"
 // #include "BinaryData.h"
-//PresetHandler::PresetHandler()
-//	: Categories({"Unknown", "Lead", "Brass", "Template", "Bass",
-//	"Key", "Organ" , "Pad", "Drums_Perc", "SpecialEffect","Sequence", "String" }),hasCategories(false)
+
 PresetHandler::PresetHandler()
 	:hasCategories(false)
 {
-	m_categoryList.push_back("None"); // default is None
+	m_categoryList.push_back("Unknown"); // default is None
 }
 void PresetHandler::addCategory(String newCat)
 {
 	if (hasCategories == false)
 	{
-		m_categoryList.pop_back();
+		// m_categoryList.pop_back();
 		hasCategories = true;
 	}
 	m_categoryList.push_back(newCat);
-
+	// Sort and delete all doubles
+	std::sort(m_categoryList.begin(), m_categoryList.end());
+    m_categoryList.erase(std::unique(m_categoryList.begin(), m_categoryList.end()), m_categoryList.end());
+	// erase is quit new, alternative is if ( std::any_of(foo.begin(), foo.end(), [](int i){return i<0;})
+	// the last is a lambda function that returns a boolean
+	if (m_categoryList.size() >= g_maxNumberOfCategories)
+	{
+		m_categoryList.pop_back();
+	}
 }
+void PresetHandler::addCategory(StringArray newCat)
+{
+	for (auto singleCat : newCat)
+	{
+		addCategory(singleCat);
+	}
+}
+
 
 int PresetHandler::setAudioValueTreeState(AudioProcessorValueTreeState* vts)
 {
@@ -48,14 +56,15 @@ int PresetHandler::addPreset(ValueTree& newpreset)
 	return 0;
 }
 
-int PresetHandler::addOrChangeCurrentPreset(String name, String category)
+int PresetHandler::addOrChangeCurrentPreset(String name, String category, String bank)
 {
 	m_vts->state.setProperty("presetname", name, nullptr);
-	m_vts->state.setProperty("category", category, nullptr);
+	
+	m_vts->state.setProperty("bank", bank, nullptr);
 
 	auto state = m_vts->copyState();
 	m_presetList.insert_or_assign(name, state);
-	savePreset(name, category);
+	savePreset(name, category, bank);
 
 	return 0;
 }
@@ -78,9 +87,8 @@ ValueTree PresetHandler::getPreset(String name)
 int PresetHandler::changePreset(ValueTree& newpreset)
 {
 	String name = newpreset.getProperty("presetname");
-	String cat = newpreset.getProperty("category");
 	m_presetList.insert_or_assign(name, newpreset);
-	savePreset(name, cat);
+	savePreset(newpreset);
 	return 0;
 }
 
@@ -133,7 +141,7 @@ File PresetHandler::getFactoryPresetsFolder()
 	return rootFolder;
 }
 
-int PresetHandler::savePreset(String name, String category)
+int PresetHandler::savePreset(String name, String category, String bank)
 {
 	bool wasCreated;
 	File outfiledir = getUserPresetsFolder(wasCreated);
@@ -148,10 +156,26 @@ int PresetHandler::savePreset(String name, String category)
 	m_vts->state.setProperty("version", JucePlugin_VersionString, nullptr);
 	m_vts->state.setProperty("presetname", name, nullptr);
 	m_vts->state.setProperty("category", category, nullptr);
-
+	m_vts->state.setProperty("bank", bank, nullptr);
 
 	auto state = m_vts->copyState();
 	std::unique_ptr<XmlElement> xml(state.createXml());
+	xml->writeTo(foXML);
+	return 0;
+}
+int PresetHandler::savePreset(ValueTree& vt)
+{
+	bool wasCreated;
+	File outfiledir = getUserPresetsFolder(wasCreated);
+	String name = vt.getProperty("presetname");
+	File outfileXML = outfiledir.getChildFile(name+".xml");
+	FileOutputStream foXML(outfileXML);
+	if (foXML.openedOk())
+	{
+		foXML.setPosition(0);
+		foXML.truncate();
+	}
+	std::unique_ptr<XmlElement> xml(vt.createXml());
 	xml->writeTo(foXML);
 	return 0;
 }
@@ -190,7 +214,7 @@ int PresetHandler::deletePresetFile(String name)
 	return 0;
 }
 
-int PresetHandler::loadAllUserPresets()
+int PresetHandler::loadfromFileAllUserPresets()
 {
 	bool wasCreated;
 	File outfiledir = getUserPresetsFolder(wasCreated);
@@ -199,9 +223,11 @@ int PresetHandler::loadAllUserPresets()
 	{
 		addOrChangeCurrentPreset("Init","Unknown");
 	}
-	for (auto kk : files)
+	for (auto oneFile : files)
 	{
-		auto vt = loadPreset(kk.getFileNameWithoutExtension());
+		auto vt = loadPreset(oneFile.getFileNameWithoutExtension());
+		String cat = vt.getProperty("category");
+		repairCategory(vt);
 		addPreset(vt);
 	}
 	return files.size();
@@ -230,16 +256,20 @@ void PresetHandler::DeployFactoryPresets()
 		int sizeData;
 		auto data = BinaryData::getNamedResource(binname, sizeData);
 
-		std::unique_ptr<XmlElement> xml2(XmlDocument::parse(data));
+		std::unique_ptr<XmlElement> xml(XmlDocument::parse(data));
 		ValueTree vt;
-		if (sizeData != 0 && xml2 != nullptr)
+		if (sizeData != 0 && xml != nullptr)
 		{
-			vt = ValueTree::fromXml(*xml2);
-
-			m_vts->replaceState(vt);
+			vt = ValueTree::fromXml(*xml);
+			// Dies ist vermutlich falsch
+			// m_vts->replaceState(vt);
 			String name = vt.getProperty("presetname");
 			String category = vt.getProperty("category");
-			addOrChangeCurrentPreset(name, category);
+			vt.setProperty("bank","Factory",nullptr);
+			// addOrChangeCurrentPreset(name, category, "Factory");
+			repairCategory(vt);
+			addPreset(vt);
+			savePreset(vt);
 		}
 	}
 }
@@ -267,33 +297,35 @@ PresetComponent::PresetComponent(PresetHandler& ph)
 	m_saveButton.onClick = [this]() {savePreset(); };
 	addAndMakeVisible(m_saveButton);
 
+
+	int id = 1;
+	for (auto cat : m_presetHandler.m_categoryList)
+		m_categoriesCombo.addItem(cat,id++);
+
+	m_categoriesCombo.setSelectedItemIndex(0, NotificationType::dontSendNotification);
+	m_categoriesCombo.onChange = [this]() {categorychanged(); };
+	addAndMakeVisible(m_categoriesCombo);
+
+
 	std::vector<String> keys;
 	m_presetHandler.getAllKeys(keys);
 
-	int id = 0;
-	for (auto cat : keys)
-		m_presetCombo.addItem(cat, ++id);
+	id = 1;
+	for (auto onepreset : keys)
+		m_presetCombo.addItem(onepreset, id++);
 
 	m_presetCombo.onChange = [this]() {itemchanged(); };
-	m_presetCombo.setSelectedItemIndex(0, false);
+	m_presetCombo.setSelectedItemIndex(0, NotificationType::sendNotificationAsync);
 	m_presetCombo.isTextEditable();
 	m_presetCombo.setEditableText(true);
 	m_presetCombo.setColour(ComboBox::ColourIds::backgroundColourId, JadeGray);
 
 	addAndMakeVisible(m_presetCombo);
 
-	id = 1;
-	for (auto cat : m_presetHandler.m_categoryList)
-		m_categoriesCombo.addItem(cat,id++);
-
-	m_categoriesCombo.setSelectedItemIndex(0, false);
-	m_categoriesCombo.onChange = [this]() {categorychanged(); };
-	addAndMakeVisible(m_categoriesCombo);
-
 	//getRootMenu()->addSubMenu(). for submenus in the preset combo
 
 
-	// itemchanged();
+	//itemchanged();
 	m_somethingchanged = false;
 }
 
@@ -343,7 +375,7 @@ void PresetComponent::nextButtonClick()
 	if (id == m_presetCombo.getNumItems())
 		id = 0;
 
-	m_presetCombo.setSelectedItemIndex(id, false);
+	m_presetCombo.setSelectedItemIndex(id, NotificationType::sendNotificationAsync);
 	//itemchanged();
 }
 void PresetComponent::savePreset()
@@ -358,7 +390,7 @@ void PresetComponent::savePreset()
 	else
 		itemname = m_presetCombo.getItemText(id);
 
-
+	
 	m_presetHandler.savePreset(itemname, catname);
 	m_somethingchanged = false;
 	repaint();
@@ -373,7 +405,7 @@ void PresetComponent::prevButtonClick()
 	if (id == -2)
 		id = m_presetCombo.getNumItems() - 2;
 
-	m_presetCombo.setSelectedItemIndex(id, false);
+	m_presetCombo.setSelectedItemIndex(id, NotificationType::sendNotificationAsync);
 	//itemchanged();
 }
 
@@ -395,7 +427,7 @@ void PresetComponent::itemchanged()
 	{
 		m_somethingchanged = false;
 		repaint();
-		m_categoriesCombo.setSelectedItemIndex(0, false);
+		// m_categoriesCombo.setSelectedItemIndex(0, false);
 		m_presetHandler.addOrChangeCurrentPreset(itemname);
 
 		m_presetCombo.addItem(itemname, m_presetCombo.getNumItems()+1);
@@ -444,7 +476,7 @@ void PresetComponent::categorychanged()
 /*
 ToDO:
 
-1) Factory Presets einbauen (vermutlich am Besten ueber RAM, also im Produjucer einpflegen)
+
 2) Combobox f�r mehr Presets (entweder showPopup() �berladen) oder mit Sub-Menus
 getRootMenu()->addSubMenu(). (Mit Banks w�re das einfach (Eine Factory Bank mit 32 festen Presets 
 und 7 andere Banks f�r User Presets))
