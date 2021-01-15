@@ -53,7 +53,7 @@ public:
 	int deletePresetFile(String name);
 	int loadfromFileAllUserPresets();
 	int getNrOfPresets() { return m_presetList.size(); };
-	int getAllKeys(std::vector<String>& keys);
+	int getAllKeys(std::vector<String>& keys, std::vector<String>& presetcats);
 /*	int changeCategoryOfCurrentTreeState(String category)
 	{
 		m_vts->state.setProperty("category", category, nullptr);

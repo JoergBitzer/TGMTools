@@ -233,11 +233,12 @@ int PresetHandler::loadfromFileAllUserPresets()
 	return files.size();
 }
 
-int PresetHandler::getAllKeys(std::vector<String>& keys)
+int PresetHandler::getAllKeys(std::vector<String>& keys, std::vector<String>& presetcats)
 {
 	for (std::map<String, ValueTree>::iterator it = m_presetList.begin(); it != m_presetList.end(); ++it) 
 	{
 		keys.push_back(it->first);
+		presetcats.push_back(it->second.getProperty("category"));
 	}
 	return 0;
 }
@@ -307,12 +308,27 @@ PresetComponent::PresetComponent(PresetHandler& ph)
 	addAndMakeVisible(m_categoriesCombo);
 
 
-	std::vector<String> keys;
-	m_presetHandler.getAllKeys(keys);
+	std::vector<String> presetkeys;
+	std::vector<String> presetcats;
+	auto mastercombomenu = m_presetCombo.getRootMenu();
+	id = 1;
+	m_presetHandler.getAllKeys(presetkeys, presetcats);
+	for (auto cat : m_presetHandler.m_categoryList)
+	{
+		PopupMenu submenu;
+		for (auto kk = 0u; kk < presetcats.size(); ++kk)
+		{
+			if (cat == presetcats[kk])
+			{
+				submenu.addItem(id++,presetkeys[kk]);
+			}
+		}
+		mastercombomenu->addSubMenu(cat,submenu);
+	}
 
 	id = 1;
-	for (auto onepreset : keys)
-		m_presetCombo.addItem(onepreset, id++);
+//	for (auto onepreset : presetkeys)
+//		m_presetCombo.addItem(onepreset, id++);
 
 	m_presetCombo.onChange = [this]() {itemchanged(); };
 	m_presetCombo.setSelectedItemIndex(0, NotificationType::sendNotificationAsync);
@@ -343,7 +359,7 @@ void PresetComponent::paint(Graphics & g)
 		m_saveButton.setColour(TextButton::ColourIds::buttonColourId, JadeGray);
 	}
 }
-#define COMBO_WITH 150
+#define COMBO_WITH 100
 #define ELEMENT_DIST 10
 #define BUTTON_WIDTH 40
 #define ELEMENT_HEIGHT 20
@@ -431,7 +447,7 @@ void PresetComponent::itemchanged()
 		m_presetHandler.addOrChangeCurrentPreset(itemname);
 
 		m_presetCombo.addItem(itemname, m_presetCombo.getNumItems()+1);
-		//m_presetCombo.setSelectedItemIndex(m_presetCombo.getNumItems()-1);
+		m_presetCombo.setSelectedItemIndex(m_presetCombo.getNumItems()-1);
 		return;
 	}
 	
@@ -468,8 +484,15 @@ void PresetComponent::categorychanged()
 	String catname = m_categoriesCombo.getItemText(catid);
 	
 	if (catname != m_oldcatname)
+	{
 		m_somethingchanged = true;
+		m_oldcatname = catname;
+		// Todo Remove preset from submenu
 
+		// ToDo Add preset to the correct submenu
+
+
+	}
 	m_presetHandler.changePresetCategory(itemname, catname);
 }
 
