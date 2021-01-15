@@ -54,17 +54,24 @@ public:
 	int loadfromFileAllUserPresets();
 	int getNrOfPresets() { return m_presetList.size(); };
 	int getAllKeys(std::vector<String>& keys);
-	int changeCategoryOfCurrentTreeState(String category)
+/*	int changeCategoryOfCurrentTreeState(String category)
 	{
 		m_vts->state.setProperty("category", category, nullptr);
-	}
+	}*/
 	bool isAlreadyAPreset(String name)
 	{
 		return m_presetList.count(name);
 	}
 	bool isAValidCategory(String category)
 	{
-		return std::any_of(m_categoryList.begin(), m_categoryList.end(), [category](String st){return st == category;});
+		return (binary_search(m_categoryList.begin(), m_categoryList.end(), category));
+		/*for (auto ca : m_categoryList)
+		{
+			if (ca == category)
+				return true;
+		}
+		return false;*/
+
 	}
 
 // new methods for categories

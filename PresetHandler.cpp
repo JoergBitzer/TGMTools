@@ -297,33 +297,35 @@ PresetComponent::PresetComponent(PresetHandler& ph)
 	m_saveButton.onClick = [this]() {savePreset(); };
 	addAndMakeVisible(m_saveButton);
 
+
+	int id = 1;
+	for (auto cat : m_presetHandler.m_categoryList)
+		m_categoriesCombo.addItem(cat,id++);
+
+	m_categoriesCombo.setSelectedItemIndex(0, NotificationType::dontSendNotification);
+	m_categoriesCombo.onChange = [this]() {categorychanged(); };
+	addAndMakeVisible(m_categoriesCombo);
+
+
 	std::vector<String> keys;
 	m_presetHandler.getAllKeys(keys);
 
-	int id = 0;
-	for (auto cat : keys)
-		m_presetCombo.addItem(cat, ++id);
+	id = 1;
+	for (auto onepreset : keys)
+		m_presetCombo.addItem(onepreset, id++);
 
 	m_presetCombo.onChange = [this]() {itemchanged(); };
-	m_presetCombo.setSelectedItemIndex(0, false);
+	m_presetCombo.setSelectedItemIndex(0, NotificationType::sendNotificationAsync);
 	m_presetCombo.isTextEditable();
 	m_presetCombo.setEditableText(true);
 	m_presetCombo.setColour(ComboBox::ColourIds::backgroundColourId, JadeGray);
 
 	addAndMakeVisible(m_presetCombo);
 
-	id = 1;
-	for (auto cat : m_presetHandler.m_categoryList)
-		m_categoriesCombo.addItem(cat,id++);
-
-	m_categoriesCombo.setSelectedItemIndex(0, false);
-	m_categoriesCombo.onChange = [this]() {categorychanged(); };
-	addAndMakeVisible(m_categoriesCombo);
-
 	//getRootMenu()->addSubMenu(). for submenus in the preset combo
 
 
-	// itemchanged();
+	//itemchanged();
 	m_somethingchanged = false;
 }
 
@@ -341,7 +343,7 @@ void PresetComponent::paint(Graphics & g)
 		m_saveButton.setColour(TextButton::ColourIds::buttonColourId, JadeGray);
 	}
 }
-#define COMBO_WITH 90
+#define COMBO_WITH 150
 #define ELEMENT_DIST 10
 #define BUTTON_WIDTH 40
 #define ELEMENT_HEIGHT 20
@@ -373,7 +375,7 @@ void PresetComponent::nextButtonClick()
 	if (id == m_presetCombo.getNumItems())
 		id = 0;
 
-	m_presetCombo.setSelectedItemIndex(id, false);
+	m_presetCombo.setSelectedItemIndex(id, NotificationType::sendNotificationAsync);
 	//itemchanged();
 }
 void PresetComponent::savePreset()
@@ -403,7 +405,7 @@ void PresetComponent::prevButtonClick()
 	if (id == -2)
 		id = m_presetCombo.getNumItems() - 2;
 
-	m_presetCombo.setSelectedItemIndex(id, false);
+	m_presetCombo.setSelectedItemIndex(id, NotificationType::sendNotificationAsync);
 	//itemchanged();
 }
 
