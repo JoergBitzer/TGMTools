@@ -298,7 +298,7 @@ PresetComponent::PresetComponent(PresetHandler& ph)
 	m_saveButton.onClick = [this]() {savePreset(); };
 	addAndMakeVisible(m_saveButton);
 
-
+	// todo: check if could move that to !m_hide
 	int id = 1;
 	for (auto cat : m_presetHandler.m_categoryList)
 		m_categoriesCombo.addItem(cat,id++);
@@ -308,27 +308,35 @@ PresetComponent::PresetComponent(PresetHandler& ph)
 	addAndMakeVisible(m_categoriesCombo);
 
 
+
 	std::vector<String> presetkeys;
 	std::vector<String> presetcats;
-	auto mastercombomenu = m_presetCombo.getRootMenu();
-	id = 1;
 	m_presetHandler.getAllKeys(presetkeys, presetcats);
-	for (auto cat : m_presetHandler.m_categoryList)
-	{
-		PopupMenu submenu;
-		for (auto kk = 0u; kk < presetcats.size(); ++kk)
-		{
-			if (cat == presetcats[kk])
-			{
-				submenu.addItem(id++,presetkeys[kk]);
-			}
-		}
-		mastercombomenu->addSubMenu(cat,submenu);
-	}
 
-	id = 1;
-//	for (auto onepreset : presetkeys)
-//		m_presetCombo.addItem(onepreset, id++);
+	if (m_hidecategory)
+	{
+		int id = 1;
+		for (auto onepreset : presetkeys)
+			m_presetCombo.addItem(onepreset, id++);
+	}
+	else
+	{
+
+		auto mastercombomenu = m_presetCombo.getRootMenu();
+		id = 1;
+		for (auto cat : m_presetHandler.m_categoryList)
+		{
+			PopupMenu submenu;
+			for (auto kk = 0u; kk < presetcats.size(); ++kk)
+			{
+				if (cat == presetcats[kk])
+				{
+					submenu.addItem(id++,presetkeys[kk]);
+				}
+			}
+			mastercombomenu->addSubMenu(cat,submenu);
+		}
+	}
 
 	m_presetCombo.onChange = [this]() {itemchanged(); };
 	m_presetCombo.setSelectedItemIndex(0, NotificationType::sendNotificationAsync);
@@ -337,9 +345,6 @@ PresetComponent::PresetComponent(PresetHandler& ph)
 	m_presetCombo.setColour(ComboBox::ColourIds::backgroundColourId, JadeGray);
 
 	addAndMakeVisible(m_presetCombo);
-
-	//getRootMenu()->addSubMenu(). for submenus in the preset combo
-
 
 	//itemchanged();
 	m_somethingchanged = false;
