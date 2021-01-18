@@ -111,14 +111,20 @@ int PresetHandler::deletePreset(ValueTree & newpreset)
 
 File PresetHandler::getUserPresetsFolder(bool &wasCreated) 
 {
-	File rootFolder = File::getSpecialLocation(File::SpecialLocationType::userApplicationDataDirectory);
-#ifdef JUCE_MAC
+	File rootFolder;
+	rootFolder = File::getSpecialLocation(File::SpecialLocationType::userApplicationDataDirectory);
 
-	rootFolder = rootFolder.getChildFile("Audio").getChildFile("Presets");
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__) || __linux__
 
-#endif
 	rootFolder = rootFolder.getChildFile(JucePlugin_Manufacturer).getChildFile(JucePlugin_Name);
 
+#elif __APPLE__
+
+	rootFolder = rootFolder.getChildFile("Audio").getChildFile("Presets");
+	rootFolder = rootFolder.getChildFile(JucePlugin_Manufacturer).getChildFile(JucePlugin_Name);
+
+#endif
+	
 	auto lala = rootFolder.getFileName();
 
 	wasCreated = !rootFolder.isDirectory();
@@ -133,11 +139,16 @@ File PresetHandler::getFactoryPresetsFolder()
 {
 	File rootFolder = File::getSpecialLocation(File::SpecialLocationType::commonApplicationDataDirectory);
 
-#if JUCE_MAC
-	rootFolder = rootFolder.getChildFile(�Audio�).getChildFile(�Presets�);
-#endif
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__) || defined(__NT__) || __linux__
+
 	rootFolder = rootFolder.getChildFile(JucePlugin_Manufacturer).getChildFile(JucePlugin_Name);
-	Result res = rootFolder.createDirectory();
+
+#elif __APPLE__
+
+	rootFolder = rootFolder.getChildFile("Audio").getChildFile("Presets");
+
+#endif
+		Result res = rootFolder.createDirectory();
 	return rootFolder;
 }
 
@@ -426,6 +437,7 @@ void PresetComponent::itemchanged()
 		m_somethingchanged = false;
 		repaint();
 		m_presetHandler.addOrChangeCurrentPreset(itemname);
+		m_presetCombo.clear();
 		buildPresetCombo();
 		return;
 	}
