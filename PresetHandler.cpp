@@ -233,11 +233,12 @@ int PresetHandler::loadfromFileAllUserPresets()
 	return files.size();
 }
 
-int PresetHandler::getAllKeys(std::vector<String>& keys)
+int PresetHandler::getAllKeys(std::vector<String>& keys, std::vector<String>& presetcats)
 {
 	for (std::map<String, ValueTree>::iterator it = m_presetList.begin(); it != m_presetList.end(); ++it) 
 	{
 		keys.push_back(it->first);
+		presetcats.push_back(it->second.getProperty("category"));
 	}
 	return 0;
 }
@@ -253,23 +254,28 @@ void PresetHandler::DeployFactoryPresets()
 	for (auto kk = 0; kk < sizesofbinarydata;++kk)
 	{
 		auto binname = namesofbinarydata[kk];
-		int sizeData;
-		auto data = BinaryData::getNamedResource(binname, sizeData);
+		String name(binname);
 
-		std::unique_ptr<XmlElement> xml(XmlDocument::parse(data));
-		ValueTree vt;
-		if (sizeData != 0 && xml != nullptr)
+		if (name.getLastCharacters(3) == String("xml"))
 		{
-			vt = ValueTree::fromXml(*xml);
-			// Dies ist vermutlich falsch
-			// m_vts->replaceState(vt);
-			String name = vt.getProperty("presetname");
-			String category = vt.getProperty("category");
-			vt.setProperty("bank","Factory",nullptr);
-			// addOrChangeCurrentPreset(name, category, "Factory");
-			repairCategory(vt);
-			addPreset(vt);
-			savePreset(vt);
+			int sizeData;
+			auto data = BinaryData::getNamedResource(binname, sizeData);
+
+			std::unique_ptr<XmlElement> xml(XmlDocument::parse(data));
+			ValueTree vt;
+			if (sizeData != 0 && xml != nullptr)
+			{
+				vt = ValueTree::fromXml(*xml);
+				// Dies ist vermutlich falsch
+				// m_vts->replaceState(vt);
+				String name = vt.getProperty("presetname");
+				String category = vt.getProperty("category");
+				vt.setProperty("bank","Factory",nullptr);
+				// addOrChangeCurrentPreset(name, category, "Factory");
+				repairCategory(vt);
+				addPreset(vt);
+				savePreset(vt);
+			}
 		}
 	}
 }
@@ -297,7 +303,7 @@ PresetComponent::PresetComponent(PresetHandler& ph)
 	m_saveButton.onClick = [this]() {savePreset(); };
 	addAndMakeVisible(m_saveButton);
 
-
+	// todo: check if could move that to !m_hide
 	int id = 1;
 	for (auto cat : m_presetHandler.m_categoryList)
 		m_categoriesCombo.addItem(cat,id++);
@@ -307,12 +313,7 @@ PresetComponent::PresetComponent(PresetHandler& ph)
 	addAndMakeVisible(m_categoriesCombo);
 
 
-	std::vector<String> keys;
-	m_presetHandler.getAllKeys(keys);
-
-	id = 1;
-	for (auto onepreset : keys)
-		m_presetCombo.addItem(onepreset, id++);
+	buildPresetCombo();
 
 	m_presetCombo.onChange = [this]() {itemchanged(); };
 	m_presetCombo.setSelectedItemIndex(0, NotificationType::sendNotificationAsync);
@@ -321,9 +322,6 @@ PresetComponent::PresetComponent(PresetHandler& ph)
 	m_presetCombo.setColour(ComboBox::ColourIds::backgroundColourId, JadeGray);
 
 	addAndMakeVisible(m_presetCombo);
-
-	//getRootMenu()->addSubMenu(). for submenus in the preset combo
-
 
 	//itemchanged();
 	m_somethingchanged = false;
@@ -343,7 +341,7 @@ void PresetComponent::paint(Graphics & g)
 		m_saveButton.setColour(TextButton::ColourIds::buttonColourId, JadeGray);
 	}
 }
-#define COMBO_WITH 150
+#define COMBO_WITH 100
 #define ELEMENT_DIST 10
 #define BUTTON_WIDTH 40
 #define ELEMENT_HEIGHT 20
@@ -427,11 +425,8 @@ void PresetComponent::itemchanged()
 	{
 		m_somethingchanged = false;
 		repaint();
-		// m_categoriesCombo.setSelectedItemIndex(0, false);
 		m_presetHandler.addOrChangeCurrentPreset(itemname);
-
-		m_presetCombo.addItem(itemname, m_presetCombo.getNumItems()+1);
-		//m_presetCombo.setSelectedItemIndex(m_presetCombo.getNumItems()-1);
+		buildPresetCombo();
 		return;
 	}
 	
@@ -466,19 +461,46 @@ void PresetComponent::categorychanged()
 
 	int catid = m_categoriesCombo.getSelectedItemIndex();
 	String catname = m_categoriesCombo.getItemText(catid);
+	m_presetHandler.changePresetCategory(itemname, catname);
 	
 	if (catname != m_oldcatname)
+	{
 		m_somethingchanged = true;
+		m_oldcatname = catname;
 
-	m_presetHandler.changePresetCategory(itemname, catname);
+		m_presetCombo.clear();
+		buildPresetCombo();
+
+	}
 }
+void PresetComponent::buildPresetCombo()
+{
+	std::vector<String> presetkeys;
+	std::vector<String> presetcats;
+	m_presetHandler.getAllKeys(presetkeys, presetcats);
 
-/*
-ToDO:
-
-
-2) Combobox f�r mehr Presets (entweder showPopup() �berladen) oder mit Sub-Menus
-getRootMenu()->addSubMenu(). (Mit Banks w�re das einfach (Eine Factory Bank mit 32 festen Presets 
-und 7 andere Banks f�r User Presets))
-
-*/
+	
+	int id = 1;
+	if (m_hidecategory)
+	{
+		int id = 1;
+		for (auto onepreset : presetkeys)
+			m_presetCombo.addItem(onepreset, id++);
+	}
+	else
+	{
+		auto mastercombomenu = m_presetCombo.getRootMenu();
+		for (auto cat : m_presetHandler.m_categoryList)
+		{
+			PopupMenu submenu;
+			for (auto kk = 0u; kk < presetcats.size(); ++kk)
+			{
+				if (cat == presetcats[kk])
+				{
+					submenu.addItem(id++,presetkeys[kk]);
+				}
+			}
+			mastercombomenu->addSubMenu(cat,submenu);
+		}
+	}
+}
