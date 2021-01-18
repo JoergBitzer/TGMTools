@@ -20,6 +20,9 @@
 /*
 	Ideas: delete a preset by a special menu entry on right clock button on a preset entry (savety measure)
 
+	Todo: (if necessary): How to update Presets from different versions: Possible Solution would be a special converter for 
+	each version of a plugin. Is there a general pattern, to do it hiere in the presetHAndler.
+
 */
 
 #pragma once
