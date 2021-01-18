@@ -7,13 +7,14 @@
 
 	// Version 1.0.1 18.06.20 JB: color in save button changed to jadeGrey and JadeRed
 								  new dependency from JadeLookAndFeel
-	// Version 1.1.1 11.02.20 JB: Added Handling of Factory presets, 
+	// Version 1.1.1 11.01.20 JB: Added Handling of Factory presets, 
 								  changed how to create categories (more flexibel)
 								  automation of category combobox, if no categories are set
-	// Version 1.1.2 14.02.20 JB: improved category handling (categories can be set and 
+	// Version 1.1.2 14.01.20 JB: improved category handling (categories can be set and 
 								  save (no unknown categories-> set to Unknown))
 
- 
+	// Version 1.2.0 18.01.20 JB: added submenus for categories (if provided)
+
   ==============================================================================
 */
 /*
@@ -54,24 +55,28 @@ public:
 	int loadfromFileAllUserPresets();
 	int getNrOfPresets() { return m_presetList.size(); };
 	int getAllKeys(std::vector<String>& keys, std::vector<String>& presetcats);
-/*	int changeCategoryOfCurrentTreeState(String category)
-	{
-		m_vts->state.setProperty("category", category, nullptr);
-	}*/
+
 	bool isAlreadyAPreset(String name)
 	{
 		return m_presetList.count(name);
 	}
-	bool isAValidCategory(String category)
+	bool isAValidCategory(String category, int &position)
 	{
-		return (binary_search(m_categoryList.begin(), m_categoryList.end(), category));
-		/*for (auto ca : m_categoryList)
+		
+		auto it = std::find(m_categoryList.begin(), m_categoryList.end(), category);
+ 
+    	// If element was found
+    	if (it != m_categoryList.end()) 
+    	{
+        	// calculating the index of K
+        	position = it - m_categoryList.begin();
+			return true;
+	    }
+    	else 
 		{
-			if (ca == category)
-				return true;
-		}
-		return false;*/
-
+			position = -1;
+			return false;
+	    }		
 	}
 
 // new methods for categories
@@ -92,7 +97,8 @@ private:
 	void repairCategory(ValueTree& vt)
 	{
 		String category = vt.getProperty("category");
-		bool isCat = isAValidCategory(category);
+		int pos;
+		bool isCat = isAValidCategory(category,pos);
 		if (isCat)
 		{
 			vt.setProperty("category", category, nullptr);
@@ -136,4 +142,6 @@ private:
 	String m_oldcatname;
 	bool m_somethingchanged;
 	bool m_hidecategory;
+
+	void buildPresetCombo();
 };
