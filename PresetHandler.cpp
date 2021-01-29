@@ -253,6 +253,7 @@ int PresetHandler::getAllKeys(std::vector<String>& keys, std::vector<String>& pr
 	}
 	return 0;
 }
+#ifdef FACTORY_PRESETS
 void PresetHandler::DeployFactoryPresets()
 {
 	bool wasCreated;
@@ -290,7 +291,7 @@ void PresetHandler::DeployFactoryPresets()
 		}
 	}
 }
-
+#endif
 
 PresetComponent::PresetComponent(PresetHandler& ph)
 	:m_presetHandler(ph), m_somethingchanged(false)

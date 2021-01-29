@@ -89,8 +89,9 @@ public:
 	std::vector<String> m_categoryList;
 
 // Factory Presets 
+#ifdef FACTORY_PRESETS
 	void DeployFactoryPresets();
-
+#endif
 private:
 	AudioProcessorValueTreeState* m_vts;
 	std::map <String, ValueTree> m_presetList;
