@@ -50,7 +50,9 @@ private:
 void drawButtonText (Graphics& g, TextButton& button,
 		bool /*shouldDrawButtonAsHighlighted*/, bool /*shouldDrawButtonAsDown*/)
 	{
-		Font font (button.getHeight () * 0.6f);
+		// Font font (button.getHeight () * 0.6f);
+		Font font (m_fontSize);
+
 		g.setFont (font);
 		g.setColour (button.findColour (button.getToggleState () ? TextButton::textColourOnId
 			: TextButton::textColourOffId)
