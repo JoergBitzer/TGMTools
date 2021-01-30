@@ -40,9 +40,45 @@ class JadeLookAndFeel : public LookAndFeel_V4
 {
 public:
 	JadeLookAndFeel();
+	void setFontSize(int newFontSize){m_fontSize = newFontSize;};
 
 private:
+	int m_fontSize;
 	void drawRotarySlider(Graphics& g, int x, int y, int width, int height, float sliderPos,
 		const float rotaryStartAngle, const float rotaryEndAngle, Slider& slider) override;
+
+void drawButtonText (Graphics& g, TextButton& button,
+		bool /*shouldDrawButtonAsHighlighted*/, bool /*shouldDrawButtonAsDown*/)
+	{
+		Font font (button.getHeight () * 0.6f);
+		g.setFont (font);
+		g.setColour (button.findColour (button.getToggleState () ? TextButton::textColourOnId
+			: TextButton::textColourOffId)
+			.withMultipliedAlpha (button.isEnabled () ? 1.0f : 0.5f));
+
+		const int yIndent = button.proportionOfHeight (0.1f);
+		const int cornerSize = jmin (button.getHeight (), button.getWidth ()) / 2;
+
+		const int leftIndent = cornerSize / (button.isConnectedOnLeft () ?
+                  yIndent * 2 : yIndent);
+		const int rightIndent = cornerSize / (button.isConnectedOnRight () ? 
+                  yIndent * 2 : yIndent);
+		const int textWidth = button.getWidth () - leftIndent - rightIndent;
+
+		if (textWidth > 0)
+			g.drawFittedText (button.getButtonText (),
+				leftIndent, yIndent, textWidth, button.getHeight () - yIndent * 2,
+				Justification::centred, 2, 0.5f);
+	}	
+	Font getComboBoxFont (ComboBox &c)
+	{
+		//return Font(c.getHeight () * 0.6f);
+		return Font(m_fontSize);
+
+	}	
+	Font 	getPopupMenuFont ()
+	{
+		return Font(m_fontSize);
+	}
 };
 

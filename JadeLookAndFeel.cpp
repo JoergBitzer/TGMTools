@@ -15,7 +15,7 @@ JadeLookAndFeel::JadeLookAndFeel()
 	setColour(TextButton::ColourIds::buttonOnColourId, Colours::darkgrey);
 	setColour(TextButton::ColourIds::textColourOnId, JadeLightRed1);
 	setColour(TextButton::ColourIds::textColourOffId, JadeWhite);
-
+	m_fontSize = 12;
 
 	setDefaultLookAndFeel(this);
 }

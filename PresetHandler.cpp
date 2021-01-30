@@ -353,21 +353,43 @@ void PresetComponent::paint(Graphics & g)
 		m_saveButton.setColour(TextButton::ColourIds::buttonColourId, JadeGray);
 	}
 }
-#define COMBO_WITH 150
-#define ELEMENT_DIST 10
-#define BUTTON_WIDTH 40
-#define ELEMENT_HEIGHT 20
+#define MIN_COMBO_WITH 120
+#define MIN_ELEMENT_DIST 10
+#define MIN_BUTTON_WIDTH 40
+#define MIN_ELEMENT_HEIGHT 20
 void PresetComponent::resized()
 {
-	m_presetCombo.setBounds(getWidth() / 2 - COMBO_WITH / 2, 3, COMBO_WITH, ELEMENT_HEIGHT);
+	int newWidth = getWidth();
+	int newHeight = getHeight();
+	int xmidPos = newWidth / 2;
+	
+	// combo
+	float comboWidthRatio = 0.2;
+	int newComboWidth = jmax(MIN_COMBO_WITH,int(newWidth*comboWidthRatio));
+	int comboWidthHalf = newComboWidth/2;
 
-	m_nextButton.setBounds(getWidth() / 2 + COMBO_WITH / 2 + ELEMENT_DIST/2, 3, BUTTON_WIDTH, ELEMENT_HEIGHT);
-	m_saveButton.setBounds(getWidth() / 2 + COMBO_WITH / 2 + 2*ELEMENT_DIST + BUTTON_WIDTH, 3, BUTTON_WIDTH, ELEMENT_HEIGHT);
-	m_prevButton.setBounds(getWidth() / 2 - COMBO_WITH / 2 - ELEMENT_DIST/2 - BUTTON_WIDTH, 3, BUTTON_WIDTH, ELEMENT_HEIGHT);
+	// Element
+	float elementDistRatio = 0.02;
+	int newElementDist = jmax(MIN_ELEMENT_DIST,int(elementDistRatio*newWidth));
+	float elementHeightRatio = 0.92;
+	int newElementHeight = jmax(MIN_ELEMENT_HEIGHT,int(elementHeightRatio*newHeight));
+
+	// Button
+	float buttonWidthRatio = 0.08;
+	int newButtonWidth = jmax(MIN_BUTTON_WIDTH, int(buttonWidthRatio*newWidth));
+	
+	m_presetCombo.setBounds(xmidPos - comboWidthHalf, 3, newComboWidth, newElementHeight);
+	m_nextButton.setBounds(xmidPos + comboWidthHalf + newElementDist/2, 3, newButtonWidth, newElementHeight);
+	m_saveButton.setBounds(xmidPos + comboWidthHalf + 2*newElementDist + newButtonWidth, 3, newButtonWidth, newElementHeight);
+	m_prevButton.setBounds(xmidPos - comboWidthHalf - newElementDist/2 - newButtonWidth, 3, newButtonWidth, newElementHeight);
+
+	//m_nextButton.
+
+	
 
 	auto r = getBounds();
-	auto s = r.removeFromRight(3*COMBO_WITH / 4 + ELEMENT_DIST);
-	m_categoriesCombo.setBounds(s.getX(), 3, 3*COMBO_WITH / 4, ELEMENT_HEIGHT);
+	auto s = r.removeFromRight(3*newComboWidth / 4 + newElementDist);
+	m_categoriesCombo.setBounds(s.getX(), 3, 3*newComboWidth / 4, newElementHeight);
 	if (m_hidecategory)
 		m_categoriesCombo.setVisible(false);
 
