@@ -353,10 +353,7 @@ void PresetComponent::paint(Graphics & g)
 		m_saveButton.setColour(TextButton::ColourIds::buttonColourId, JadeGray);
 	}
 }
-#define MIN_COMBO_WITH 120
-#define MIN_ELEMENT_DIST 10
-#define MIN_BUTTON_WIDTH 40
-#define MIN_ELEMENT_HEIGHT 20
+
 void PresetComponent::resized()
 {
 	int newWidth = getWidth();
@@ -365,18 +362,18 @@ void PresetComponent::resized()
 	
 	// combo
 	float comboWidthRatio = 0.2;
-	int newComboWidth = jmax(MIN_COMBO_WITH,int(newWidth*comboWidthRatio));
+	int newComboWidth = jmax(MIN_COMBO_WITH_PRESET,int(newWidth*comboWidthRatio));
 	int comboWidthHalf = newComboWidth/2;
 
 	// Element
 	float elementDistRatio = 0.02;
-	int newElementDist = jmax(MIN_ELEMENT_DIST,int(elementDistRatio*newWidth));
+	int newElementDist = jmax(MIN_ELEMENT_DIST_PRESET,int(elementDistRatio*newWidth));
 	float elementHeightRatio = 0.92;
-	int newElementHeight = jmax(MIN_ELEMENT_HEIGHT,int(elementHeightRatio*newHeight));
+	int newElementHeight = jmax(MIN_ELEMENT_HEIGHT_PRESET,int(elementHeightRatio*newHeight));
 
 	// Button
 	float buttonWidthRatio = 0.08;
-	int newButtonWidth = jmax(MIN_BUTTON_WIDTH, int(buttonWidthRatio*newWidth));
+	int newButtonWidth = jmax(MIN_BUTTON_WIDTH_PRESET, int(buttonWidthRatio*newWidth));
 	
 	m_presetCombo.setBounds(xmidPos - comboWidthHalf, 3, newComboWidth, newElementHeight);
 	m_nextButton.setBounds(xmidPos + comboWidthHalf + newElementDist/2, 3, newButtonWidth, newElementHeight);

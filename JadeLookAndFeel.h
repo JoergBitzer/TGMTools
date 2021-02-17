@@ -28,12 +28,15 @@ const auto JadeLightRed1(Colour::fromFloatRGBA(0.956862745098039, 0.631372549019
 const auto JadeLightRed2(Colour::fromFloatRGBA(0.968627450980392, 0.733333333333333, 0.682352941176471, 1.0));
 const auto JadeLightRed3(Colour::fromFloatRGBA(0.980392156862745, 0.807843137254902, 0.776470588235294, 1.0));
 // JadeLightRed4 = [0.988235294117647 0.890196078431373 0.870588235294118];
-
+#define MIN_COMBO_WITH_PRESET 120
+#define MIN_ELEMENT_DIST_PRESET 10
+#define MIN_BUTTON_WIDTH_PRESET 40
+#define MIN_ELEMENT_HEIGHT_PRESET 20
 // Category Lists for different usage (max number of Cat is 20);
 const StringArray JadeSynthCategories("Unknown", "Lead", "Brass", "Template", "Bass",
 	"Key", "Organ" , "Pad", "Drums_Perc", "SpecialEffect","Sequence", "String" );
 /**
- * @brief the Look and Feel implements the rotary knob in a special way
+ * @brief the Look and Feel implements the rotary knob in a special way and adjust the font size according to scale
  * 
  */
 class JadeLookAndFeel : public LookAndFeel_V4
@@ -82,5 +85,16 @@ void drawButtonText (Graphics& g, TextButton& button,
 	{
 		return Font(m_fontSize);
 	}
+	Font getLabelFont()
+	{
+		return Font(m_fontSize);
+	}
+	Font getLabelFont(Label &l)
+	{
+		l.setFont(Font(m_fontSize));
+		return Font(m_fontSize);
+	}
+
+
 };
 

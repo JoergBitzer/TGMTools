@@ -37,10 +37,11 @@ void JadeLookAndFeel::drawRotarySlider(Graphics& g, int x, int y, int width, int
 	// outline
 	Colour c1 = Colour::fromFloatRGBA(1.3*JadeRed.getFloatRed()*sliderPos,3.0*JadeRed.getFloatGreen()*sliderPos,3.0*JadeRed.getFloatBlue()*sliderPos,1.0);
 	g.setColour(c1);
-	g.drawEllipse(rx, ry, rw, rw, 5.0);
+	//g.drawEllipse(rx, ry, rw, rw, 5.0);
+	g.drawEllipse(rx, ry, rw, rw, jmax(int(width*0.07),5));
 
 	// Point
-	int PointSize = 10;
+	int PointSize = jmax(width/6,10);
 	Path p;
 	p.addEllipse(-PointSize / 2, -0.95 * radius, PointSize, PointSize);
 	p.applyTransform(AffineTransform::rotation(angle).translated(centreX, centreY));
