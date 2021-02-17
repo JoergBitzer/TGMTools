@@ -13,6 +13,12 @@ version 1.2 level parameter JB 28.06.2020
 #include <vector>
 #include <math.h>
 
+#define ENV_LABEL_WIDTH 60
+#define ENV_ROTARY_WIDTH 60
+#define ENV_MIN_DISTANCE 5
+#define ENV_LABEL_HEIGHT 20
+
+
 class Envelope
 {
 public:
@@ -125,9 +131,9 @@ const struct
 	const std::string ID[MAX_ENV_INSTANCES] = { "Env1Decay", "Env2Decay", "Env3Decay", "Env4Decay" };
 	std::string name = "EnvDecay";
 	std::string unitName = "ms";
-	float minValue = log(0.1f);
+	float minValue = log(10.f);
 	float maxValue = log(10000.f);
-	float defaultValue = log(50.f);
+	float defaultValue = log(150.f);
 }paramEnvDecay;
 
 const struct
@@ -135,9 +141,9 @@ const struct
 	const std::string ID[MAX_ENV_INSTANCES] = { "Env1Release", "Env2Release", "Env3Release", "Env4Release" };
 	std::string name = "EnvRelease";
 	std::string unitName = "ms";
-	float minValue = log(0.1f);
+	float minValue = log(10.0f);
 	float maxValue = log(10000.f);
-	float defaultValue = log(50.f);
+	float defaultValue = log(150.f);
 }paramEnvRelease;
 
 const struct
@@ -165,6 +171,24 @@ class EnvelopeParameter
 {
 public:
 	int addParameter(std::vector < std::unique_ptr<RangedAudioParameter>>& paramVector, int instance);
+
+public:
+    std::atomic<float>* m_delay;
+    float m_delayOld;
+    std::atomic<float>* m_attack;
+    float m_attackOld;
+    std::atomic<float>* m_hold;
+    float m_holdOld;
+    std::atomic<float>* m_decay;
+    float m_decayOld;
+    std::atomic<float>* m_sustain;
+    float m_sustainOld;
+    std::atomic<float>* m_release;
+    float m_releaseOld;
+    std::atomic<float>* m_level;
+    float m_levelOld;
+    std::atomic<float>* m_inverted;
+    float m_invertedOld;
 };
 
 typedef AudioProcessorValueTreeState::SliderAttachment SliderAttachment;
@@ -189,6 +213,8 @@ public:
 	void setShowDelay() { m_showdelay = true; };
 	void setShowLevel() { m_showlevel = true; };
 	void setShowInvert() { m_showInvert = true; };
+
+	void setScaleFactor (float newscale){m_ScaleFactor = newscale;};
 private:
 	AudioProcessorValueTreeState& m_vts;
 	int m_index;
@@ -230,6 +256,7 @@ private:
 	ToggleButton m_EnvInvertButton;
 	std::unique_ptr<ButtonAttachment> m_EnvInvertAttachment;
 
+	float m_ScaleFactor;
 	
 };
 #endif

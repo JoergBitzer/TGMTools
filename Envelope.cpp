@@ -1,5 +1,6 @@
 #include "Envelope.h"
 
+
 Envelope::Envelope()
 {
 	m_fs = 1.0;
@@ -225,7 +226,7 @@ int EnvelopeParameter::addParameter(std::vector < std::unique_ptr<RangedAudioPar
 
 EnvelopeParameterComponent::EnvelopeParameterComponent(AudioProcessorValueTreeState& vts, int index, const String& envName)
 	:m_vts(vts), somethingChanged(nullptr), m_name(envName), m_index(index),
-	m_style(EnvelopeStyle::horizontal), m_showdelay(false),m_showlevel(false)
+	m_style(EnvelopeStyle::horizontal), m_showdelay(false),m_showlevel(false),m_ScaleFactor(1.f)
 {
 
 	m_EnvDelayLabel.setText("Delay", NotificationType::dontSendNotification);
@@ -317,15 +318,15 @@ void EnvelopeParameterComponent::paint(Graphics& g)
 	g.fillAll((getLookAndFeel().findColour(ResizableWindow::backgroundColourId)).darker(0.2));
 }
 
-#define ENV_LABEL_WIDTH 60
-#define ENV_ROTARY_WIDTH 60
-#define ENV_MIN_DISTANCE 5
-#define ENV_LABEL_HEIGHT 20
 
 void EnvelopeParameterComponent::resized()
 {
+	int w = getWidth();
+	int pw = getParentWidth();
+
+	float scaleFactor = m_ScaleFactor;
 	auto r = getLocalBounds();
-	r.reduce(ENV_MIN_DISTANCE,ENV_MIN_DISTANCE);
+	r.reduce(scaleFactor*ENV_MIN_DISTANCE,scaleFactor*ENV_MIN_DISTANCE);
 	auto s = r;
 	auto t = r;
 	switch (m_style)
@@ -334,60 +335,60 @@ void EnvelopeParameterComponent::resized()
 
 		break;
 	case EnvelopeStyle::horizontal:
-		s = r.removeFromTop(ENV_LABEL_HEIGHT);
+		s = r.removeFromTop(scaleFactor*ENV_LABEL_HEIGHT);
 		if (m_showdelay)
 		{
-			m_EnvDelayLabel.setBounds(s.removeFromLeft(ENV_LABEL_WIDTH));
-			s.removeFromLeft(ENV_MIN_DISTANCE);
+			m_EnvDelayLabel.setBounds(s.removeFromLeft(scaleFactor*ENV_LABEL_WIDTH));
+			s.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
 		}
-		m_EnvAttackLabel.setBounds(s.removeFromLeft(ENV_LABEL_WIDTH));
-		s.removeFromLeft(ENV_MIN_DISTANCE);
-		m_EnvHoldLabel.setBounds(s.removeFromLeft(ENV_LABEL_WIDTH));
-		s.removeFromLeft(ENV_MIN_DISTANCE);
-		m_EnvDecayLabel.setBounds(s.removeFromLeft(ENV_LABEL_WIDTH));
-		s.removeFromLeft(ENV_MIN_DISTANCE);
-		m_EnvSustainLabel.setBounds(s.removeFromLeft(ENV_LABEL_WIDTH));
-		s.removeFromLeft(ENV_MIN_DISTANCE);
-		m_EnvReleaseLabel.setBounds(s.removeFromLeft(ENV_LABEL_WIDTH));
+		m_EnvAttackLabel.setBounds(s.removeFromLeft(scaleFactor*ENV_LABEL_WIDTH));
+		s.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
+		m_EnvHoldLabel.setBounds(s.removeFromLeft(scaleFactor*ENV_LABEL_WIDTH));
+		s.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
+		m_EnvDecayLabel.setBounds(s.removeFromLeft(scaleFactor*ENV_LABEL_WIDTH));
+		s.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
+		m_EnvSustainLabel.setBounds(s.removeFromLeft(scaleFactor*ENV_LABEL_WIDTH));
+		s.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
+		m_EnvReleaseLabel.setBounds(s.removeFromLeft(scaleFactor*ENV_LABEL_WIDTH));
 		if (m_showlevel)
 		{
-			s.removeFromLeft(ENV_MIN_DISTANCE);
-			m_EnvLevelLabel.setBounds(s.removeFromLeft(ENV_LABEL_WIDTH));
+			s.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
+			m_EnvLevelLabel.setBounds(s.removeFromLeft(scaleFactor*ENV_LABEL_WIDTH));
 
 		}
 
 		if (m_showInvert)
 		{
-			s.removeFromLeft(ENV_MIN_DISTANCE);
-			m_EnvInvertLabel.setBounds(s.removeFromLeft(ENV_LABEL_WIDTH));
+			s.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
+			m_EnvInvertLabel.setBounds(s.removeFromLeft(scaleFactor*ENV_LABEL_WIDTH));
 		}
 
 
 		s = r;
-		t = s.removeFromBottom(ENV_ROTARY_WIDTH);
+		t = s.removeFromBottom(scaleFactor*ENV_ROTARY_WIDTH);
 		if (m_showdelay)
 		{
-			m_EnvDelaySlider.setBounds(t.removeFromLeft(ENV_ROTARY_WIDTH));
-			t.removeFromLeft(ENV_MIN_DISTANCE);
+			m_EnvDelaySlider.setBounds(t.removeFromLeft(scaleFactor*ENV_ROTARY_WIDTH));
+			t.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
 		}
-		m_EnvAttackSlider.setBounds(t.removeFromLeft(ENV_ROTARY_WIDTH));
-		t.removeFromLeft(ENV_MIN_DISTANCE);
-		m_EnvHoldSlider.setBounds(t.removeFromLeft(ENV_ROTARY_WIDTH));
-		t.removeFromLeft(ENV_MIN_DISTANCE);
-		m_EnvDecaySlider.setBounds(t.removeFromLeft(ENV_ROTARY_WIDTH));
-		t.removeFromLeft(ENV_MIN_DISTANCE);
-		m_EnvSustainSlider.setBounds(t.removeFromLeft(ENV_ROTARY_WIDTH));
-		t.removeFromLeft(ENV_MIN_DISTANCE);
-		m_EnvReleaseSlider.setBounds(t.removeFromLeft(ENV_ROTARY_WIDTH));
+		m_EnvAttackSlider.setBounds(t.removeFromLeft(scaleFactor*ENV_ROTARY_WIDTH));
+		t.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
+		m_EnvHoldSlider.setBounds(t.removeFromLeft(scaleFactor*ENV_ROTARY_WIDTH));
+		t.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
+		m_EnvDecaySlider.setBounds(t.removeFromLeft(scaleFactor*ENV_ROTARY_WIDTH));
+		t.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
+		m_EnvSustainSlider.setBounds(t.removeFromLeft(scaleFactor*ENV_ROTARY_WIDTH));
+		t.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
+		m_EnvReleaseSlider.setBounds(t.removeFromLeft(scaleFactor*ENV_ROTARY_WIDTH));
 		if (m_showlevel)
 		{
-			t.removeFromLeft(ENV_MIN_DISTANCE);
-			m_EnvLevelSlider.setBounds(t.removeFromLeft(ENV_ROTARY_WIDTH));
+			t.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
+			m_EnvLevelSlider.setBounds(t.removeFromLeft(scaleFactor*ENV_ROTARY_WIDTH));
 		}
 		if (m_showInvert)
 		{
-			t.removeFromLeft(2*ENV_MIN_DISTANCE);
-			m_EnvInvertButton.setBounds(t.removeFromLeft(ENV_ROTARY_WIDTH).removeFromTop(40));
+			t.removeFromLeft(scaleFactor*2*ENV_MIN_DISTANCE);
+			m_EnvInvertButton.setBounds(t.removeFromLeft(scaleFactor*ENV_ROTARY_WIDTH).removeFromTop(40));
 		}
 
 		break;
