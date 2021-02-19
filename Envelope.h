@@ -221,6 +221,7 @@ private:
 	String m_name;
 	EnvelopeStyle m_style;
 	bool m_showdelay;
+	bool m_showhold;
 	bool m_showlevel;
 	bool m_showInvert;
 

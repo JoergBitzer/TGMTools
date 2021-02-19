@@ -226,81 +226,94 @@ int EnvelopeParameter::addParameter(std::vector < std::unique_ptr<RangedAudioPar
 
 EnvelopeParameterComponent::EnvelopeParameterComponent(AudioProcessorValueTreeState& vts, int index, const String& envName)
 	:m_vts(vts), somethingChanged(nullptr), m_name(envName), m_index(index),
-	m_style(EnvelopeStyle::horizontal), m_showdelay(false),m_showlevel(false),m_ScaleFactor(1.f)
+	m_style(EnvelopeStyle::horizontal), m_showdelay(false),m_showlevel(false),m_ScaleFactor(1.f),m_showhold(false)
 {
 
 	m_EnvDelayLabel.setText("Delay", NotificationType::dontSendNotification);
 	m_EnvDelayLabel.setJustificationType(Justification::centred);
+	m_EnvDelayLabel.attachToComponent (&m_EnvDelaySlider, false);
 	addAndMakeVisible(m_EnvDelayLabel);
 
 	m_EnvDelaySlider.setSliderStyle(Slider::SliderStyle::Rotary);
-	m_EnvDelaySlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true, 60, 20);
+	m_EnvDelaySlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true, ENV_LABEL_WIDTH, ENV_LABEL_HEIGHT);
 	m_EnvDelayAttachment = std::make_unique<SliderAttachment>(m_vts, paramEnvDelay.ID[m_index], m_EnvDelaySlider);
 	addAndMakeVisible(m_EnvDelaySlider);
 	m_EnvDelaySlider.onValueChange = [this]() {if (somethingChanged != nullptr) somethingChanged(); };
 
 	m_EnvAttackLabel.setText("Attack", NotificationType::dontSendNotification);
 	m_EnvAttackLabel.setJustificationType(Justification::centred);
+	m_EnvAttackLabel.attachToComponent (&m_EnvAttackSlider, false);
 	addAndMakeVisible(m_EnvAttackLabel);
 
 	m_EnvAttackSlider.setSliderStyle(Slider::SliderStyle::Rotary);
-	m_EnvAttackSlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true, 60, 20);
+	m_EnvAttackSlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true, ENV_LABEL_WIDTH, ENV_LABEL_HEIGHT);
 	m_EnvAttackAttachment = std::make_unique<SliderAttachment>(m_vts, paramEnvAttack.ID[m_index], m_EnvAttackSlider);
 	addAndMakeVisible(m_EnvAttackSlider);
 	m_EnvAttackSlider.onValueChange = [this]() {if (somethingChanged != nullptr) somethingChanged(); };
 
 	m_EnvHoldLabel.setText("Hold", NotificationType::dontSendNotification);
 	m_EnvHoldLabel.setJustificationType(Justification::centred);
+	m_EnvHoldLabel.attachToComponent (&m_EnvHoldSlider, false);
+
 	addAndMakeVisible(m_EnvHoldLabel);
 
 	m_EnvHoldSlider.setSliderStyle(Slider::SliderStyle::Rotary);
-	m_EnvHoldSlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true, 60, 20);
+	m_EnvHoldSlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true,ENV_LABEL_WIDTH, ENV_LABEL_HEIGHT);
 	m_EnvHoldAttachment = std::make_unique<SliderAttachment>(m_vts, paramEnvHold.ID[m_index], m_EnvHoldSlider);
 	addAndMakeVisible(m_EnvHoldSlider);
 	m_EnvHoldSlider.onValueChange = [this]() {if (somethingChanged != nullptr) somethingChanged(); };
 
 	m_EnvDecayLabel.setText("Decay", NotificationType::dontSendNotification);
 	m_EnvDecayLabel.setJustificationType(Justification::centred);
+	m_EnvDecayLabel.attachToComponent (&m_EnvDecaySlider, false);
+
 	addAndMakeVisible(m_EnvDecayLabel);
 
 	m_EnvDecaySlider.setSliderStyle(Slider::SliderStyle::Rotary);
-	m_EnvDecaySlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true, 60, 20);
+	m_EnvDecaySlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true, ENV_LABEL_WIDTH, ENV_LABEL_HEIGHT);
 	m_EnvDecayAttachment = std::make_unique<SliderAttachment>(m_vts, paramEnvDecay.ID[m_index], m_EnvDecaySlider);
 	addAndMakeVisible(m_EnvDecaySlider);
 	m_EnvDecaySlider.onValueChange = [this]() {if (somethingChanged != nullptr) somethingChanged(); };
 
 	m_EnvSustainLabel.setText("Sustain", NotificationType::dontSendNotification);
 	m_EnvSustainLabel.setJustificationType(Justification::centred);
+	m_EnvSustainLabel.attachToComponent (&m_EnvSustainSlider, false);
+
 	addAndMakeVisible(m_EnvSustainLabel);
 
 	m_EnvSustainSlider.setSliderStyle(Slider::SliderStyle::Rotary);
-	m_EnvSustainSlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true, 60, 20);
+	m_EnvSustainSlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true, ENV_LABEL_WIDTH, ENV_LABEL_HEIGHT);
 	m_EnvSustainAttachment = std::make_unique<SliderAttachment>(m_vts, paramEnvSustain.ID[m_index], m_EnvSustainSlider);
 	addAndMakeVisible(m_EnvSustainSlider);
 	m_EnvSustainSlider.onValueChange = [this]() {if (somethingChanged != nullptr) somethingChanged(); };
 
 	m_EnvReleaseLabel.setText("Release", NotificationType::dontSendNotification);
 	m_EnvReleaseLabel.setJustificationType(Justification::centred);
+	m_EnvReleaseLabel.attachToComponent (&m_EnvReleaseSlider, false);
+
 	addAndMakeVisible(m_EnvReleaseLabel);
 
 	m_EnvReleaseSlider.setSliderStyle(Slider::SliderStyle::Rotary);
-	m_EnvReleaseSlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true, 60, 20);
+	m_EnvReleaseSlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true, ENV_LABEL_WIDTH, ENV_LABEL_HEIGHT);
 	m_EnvReleaseAttachment = std::make_unique<SliderAttachment>(m_vts, paramEnvRelease.ID[m_index], m_EnvReleaseSlider);
 	addAndMakeVisible(m_EnvReleaseSlider);
 	m_EnvReleaseSlider.onValueChange = [this]() {if (somethingChanged != nullptr) somethingChanged(); };
 
 	m_EnvLevelLabel.setText("Level", NotificationType::dontSendNotification);
 	m_EnvLevelLabel.setJustificationType(Justification::centred);
+	m_EnvLevelLabel.attachToComponent (&m_EnvLevelSlider, false);
+
 	addAndMakeVisible(m_EnvLevelLabel);
 
 	m_EnvLevelSlider.setSliderStyle(Slider::SliderStyle::Rotary);
-	m_EnvLevelSlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true, 60, 20);
+	m_EnvLevelSlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true, ENV_LABEL_WIDTH, ENV_LABEL_HEIGHT);
 	m_EnvLevelAttachment = std::make_unique<SliderAttachment>(m_vts, paramEnvLevel.ID[m_index], m_EnvLevelSlider);
 	addAndMakeVisible(m_EnvLevelSlider);
 	m_EnvLevelSlider.onValueChange = [this]() {if (somethingChanged != nullptr) somethingChanged(); };
 
 	m_EnvInvertLabel.setText("Invert", NotificationType::dontSendNotification);
 	m_EnvInvertLabel.setJustificationType(Justification::centred);
+	m_EnvInvertLabel.attachToComponent (&m_EnvInvertButton, false);
 	addAndMakeVisible(m_EnvInvertLabel);
 
 	m_EnvInvertButton.setButtonText("On");
@@ -321,8 +334,6 @@ void EnvelopeParameterComponent::paint(Graphics& g)
 
 void EnvelopeParameterComponent::resized()
 {
-	int w = getWidth();
-	int pw = getParentWidth();
 
 	float scaleFactor = m_ScaleFactor;
 	auto r = getLocalBounds();
@@ -335,55 +346,40 @@ void EnvelopeParameterComponent::resized()
 
 		break;
 	case EnvelopeStyle::horizontal:
-		s = r.removeFromTop(scaleFactor*ENV_LABEL_HEIGHT);
-		if (m_showdelay)
-		{
-			m_EnvDelayLabel.setBounds(s.removeFromLeft(scaleFactor*ENV_LABEL_WIDTH));
-			s.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
-		}
-		m_EnvAttackLabel.setBounds(s.removeFromLeft(scaleFactor*ENV_LABEL_WIDTH));
-		s.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
-		m_EnvHoldLabel.setBounds(s.removeFromLeft(scaleFactor*ENV_LABEL_WIDTH));
-		s.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
-		m_EnvDecayLabel.setBounds(s.removeFromLeft(scaleFactor*ENV_LABEL_WIDTH));
-		s.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
-		m_EnvSustainLabel.setBounds(s.removeFromLeft(scaleFactor*ENV_LABEL_WIDTH));
-		s.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
-		m_EnvReleaseLabel.setBounds(s.removeFromLeft(scaleFactor*ENV_LABEL_WIDTH));
-		if (m_showlevel)
-		{
-			s.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
-			m_EnvLevelLabel.setBounds(s.removeFromLeft(scaleFactor*ENV_LABEL_WIDTH));
-
-		}
-
-		if (m_showInvert)
-		{
-			s.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
-			m_EnvInvertLabel.setBounds(s.removeFromLeft(scaleFactor*ENV_LABEL_WIDTH));
-		}
-
-
-		s = r;
 		t = s.removeFromBottom(scaleFactor*ENV_ROTARY_WIDTH);
 		if (m_showdelay)
 		{
 			m_EnvDelaySlider.setBounds(t.removeFromLeft(scaleFactor*ENV_ROTARY_WIDTH));
 			t.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
+			m_EnvDelaySlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true,scaleFactor* ENV_LABEL_WIDTH, scaleFactor*ENV_LABEL_HEIGHT);
+
 		}
 		m_EnvAttackSlider.setBounds(t.removeFromLeft(scaleFactor*ENV_ROTARY_WIDTH));
+		m_EnvAttackSlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true,scaleFactor* ENV_LABEL_WIDTH, scaleFactor*ENV_LABEL_HEIGHT);
 		t.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
-		m_EnvHoldSlider.setBounds(t.removeFromLeft(scaleFactor*ENV_ROTARY_WIDTH));
-		t.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
+		if (m_showhold)
+		{	
+			m_EnvHoldSlider.setBounds(t.removeFromLeft(scaleFactor*ENV_ROTARY_WIDTH));
+			m_EnvHoldSlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true,scaleFactor* ENV_LABEL_WIDTH, scaleFactor*ENV_LABEL_HEIGHT);
+			t.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
+		}
 		m_EnvDecaySlider.setBounds(t.removeFromLeft(scaleFactor*ENV_ROTARY_WIDTH));
+		m_EnvDecaySlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true,scaleFactor* ENV_LABEL_WIDTH, scaleFactor*ENV_LABEL_HEIGHT);
+
 		t.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
 		m_EnvSustainSlider.setBounds(t.removeFromLeft(scaleFactor*ENV_ROTARY_WIDTH));
+		m_EnvSustainSlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true,scaleFactor* ENV_LABEL_WIDTH, scaleFactor*ENV_LABEL_HEIGHT);
+		
 		t.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
 		m_EnvReleaseSlider.setBounds(t.removeFromLeft(scaleFactor*ENV_ROTARY_WIDTH));
+		m_EnvReleaseSlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true,scaleFactor* ENV_LABEL_WIDTH, scaleFactor*ENV_LABEL_HEIGHT);
+
 		if (m_showlevel)
 		{
 			t.removeFromLeft(scaleFactor*ENV_MIN_DISTANCE);
 			m_EnvLevelSlider.setBounds(t.removeFromLeft(scaleFactor*ENV_ROTARY_WIDTH));
+			m_EnvLevelSlider.setTextBoxStyle(Slider::TextEntryBoxPosition::TextBoxBelow, true,scaleFactor* ENV_LABEL_WIDTH, scaleFactor*ENV_LABEL_HEIGHT);
+
 		}
 		if (m_showInvert)
 		{
