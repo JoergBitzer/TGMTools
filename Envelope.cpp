@@ -47,7 +47,7 @@ int Envelope::getData(std::vector<double>& data)
 				break;
 
 		case envelopePhases::Attack:
-			Gain = m_alphaAtt * m_envGain + (1 - m_alphaAtt) * m_attOver;
+			Gain = m_alphaAtt * m_envGain + (1.0 - m_alphaAtt) * m_attOver;
 			m_envGain = Gain;
 			if (m_envGain >= 1.0)
 			{
@@ -66,7 +66,7 @@ int Envelope::getData(std::vector<double>& data)
 				break;
 
 		case envelopePhases::Decay:
-			Gain = m_alphaDec * m_envGain + (1 - m_alphaDec) * m_sustainLevel;
+			Gain = m_alphaDec * m_envGain + (1.0 - m_alphaDec) * m_sustainLevel;
 			m_envGain = Gain;
 			break;
 		case envelopePhases::Release:
