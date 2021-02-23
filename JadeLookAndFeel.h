@@ -1,7 +1,7 @@
 /**
  * @file JadeLookAndFeel.h
  * @author J. Bitzer at Jade Hochschule
- * @brief implments the look and feel for the Jade PlugINs (color schemes)
+ * @brief implements the look and feel for the Jade PlugINs (color schemes)
  * @version 0.1
  * @date 2021-01-11
  * 
@@ -77,6 +77,7 @@ void drawButtonText (Graphics& g, TextButton& button,
 	}	
 	Font getComboBoxFont (ComboBox &c)
 	{
+		juce::ignoreUnused (c);
 		//return Font(c.getHeight () * 0.6f);
 		return Font(m_fontSize);
 
