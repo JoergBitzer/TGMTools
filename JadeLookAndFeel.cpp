@@ -22,6 +22,7 @@ JadeLookAndFeel::JadeLookAndFeel()
 
 void JadeLookAndFeel::drawRotarySlider(Graphics& g, int x, int y, int width, int height, float sliderPos, const float rotaryStartAngle, const float rotaryEndAngle, Slider& slider)
 {
+	juce::ignoreUnused (slider);
 	auto radius = jmin(width / 2, height / 2) - 4.0f;
 	auto centreX = x + width * 0.5f;
 	auto centreY = y + height * 0.5f;
