@@ -1,50 +1,93 @@
 #include "BrickwallLimiter.h"
 
 #include <cmath>
+#include <iostream>
+#include <fstream>
+//#include <JuceHeader.h>
 
 BrickwallLimiter::BrickwallLimiter()
-:m_fs(48000.0),m_nrofchannels(2),m_Limit(1.f),m_attackTime_ms(2.f),m_releaseTime_ms(100.f),m_Gain(1.f),
+:m_fs(48000.0),m_nrofchannels(2),m_Limit(1.0),m_attackTime_ms(2.0),m_releaseTime_ms(100.0),m_Gain(1.0),
 m_attackCounter(0),m_state(BrickwallLimiter::State::Off)
 {
     buildAndResetDelayLine();
 }
-BrickwallLimiter::BrickwallLimiter(float sampleRate)
-:m_fs(sampleRate),m_nrofchannels(2), m_Limit(1.f),m_attackTime_ms(2.f),m_releaseTime_ms(100.f),m_Gain(1.f),
+BrickwallLimiter::BrickwallLimiter(double sampleRate)
+:m_fs(sampleRate),m_nrofchannels(2), m_Limit(1.0),m_attackTime_ms(2.0),m_releaseTime_ms(100.0),m_Gain(1.0),
 m_attackCounter(0),m_state(BrickwallLimiter::State::Off)
 {
     buildAndResetDelayLine();
 }
 
-void BrickwallLimiter::prepareToPlay(float sampleRate, int nrofchannels)
+void BrickwallLimiter::prepareToPlay(double sampleRate, int nrofchannels)
 {
     m_fs = sampleRate;
     m_nrofchannels = nrofchannels;
     buildAndResetDelayLine();
 }
-int BrickwallLimiter::processSamples(std::vector<std::vector<float>>& data)
+
+double g_maxValLimit(1000.0);
+
+int BrickwallLimiter::processSamples(std::vector<std::vector<double>>& data)
 {
     size_t nrOfInputChannels= data.size();
     size_t nrOfSamples = data[0].size();
 
     for (auto kk = 0; kk < nrOfSamples; ++kk)
     {
-        float maxVal = -1000.f;
+        double maxVal = -1000.f;
         // put the input into delay and look for maximum over all channels
         for (auto cc = 0; cc < nrOfInputChannels; ++cc)
         {
-            float inVal = data[cc][kk];
+            double inVal = data[cc][kk];
+            if (inVal > g_maxValLimit)
+                inVal = g_maxValLimit;
+            
+            if (inVal < -g_maxValLimit)
+                inVal = -g_maxValLimit;
+
             m_delayline.at(cc).push(inVal);
             if (fabs(inVal)>maxVal)
                 maxVal = fabs(inVal);
         }
-        //float maxValwithGain = maxVal*(m_Gain+m_attackCounter*m_attackIncrement);
-        float maxValwithGain = maxVal*(m_Gain);
+        double maxValwithGain = maxVal*(m_Gain);
+        double maxValafterrelease = maxValwithGain;
+        int releaseSteps;
+        double mgainhelp;
+        switch (m_state)
+        {
+        case BrickwallLimiter::State::Off:
+        case BrickwallLimiter::State::Att:
+            break;
+        case BrickwallLimiter::State::Hold:
+            releaseSteps = m_delaySamples-m_holdCounter;
+            // Das hier ist Mist
+            mgainhelp = m_Gain;
+            for (auto count = 0 ;  count <= releaseSteps; count++)
+                mgainhelp = mgainhelp*m_alphaRelease + (1.0-m_alphaRelease)*1.01;
+
+            maxValafterrelease = maxVal*(mgainhelp);
+            break;
+        case BrickwallLimiter::State::Rel:
+            releaseSteps = m_delaySamples;
+            // Das hier ist Mist
+            mgainhelp = m_Gain;
+            for (auto count = 0 ;  count <= releaseSteps; count++)
+                mgainhelp = mgainhelp*m_alphaRelease + (1.0-m_alphaRelease)*1.01;
+            
+            maxValafterrelease = maxVal*(mgainhelp);
+            
+            break;
+        
+        default:
+            break;
+        }
+
 
         if (maxValwithGain>m_Limit)
         {
             m_state = BrickwallLimiter::State::Att;
             
-            float attackIncrement = -(m_Gain-m_Gain/(maxValwithGain))/m_delaySamples;
+            double attackIncrement = -(m_Gain-m_Gain/(maxValwithGain))/m_delaySamples;
             if (attackIncrement < m_attackIncrement)
             {
                 m_attackCounter = m_delaySamples;
@@ -52,10 +95,26 @@ int BrickwallLimiter::processSamples(std::vector<std::vector<float>>& data)
             }
             else
             {
-                int nrofstepsneeded = int(-(m_Gain-m_Gain/(maxValwithGain))/m_attackIncrement)+1;
-                m_attackCounter = nrofstepsneeded;
+                double nrofstepsneeded = (-(m_Gain-m_Gain/(maxValwithGain))/m_attackIncrement);
+                double nrofstepsneededfrac = nrofstepsneeded - int(nrofstepsneeded);
+                double addinc = -(m_Gain-m_Gain/(maxValwithGain))/(int(nrofstepsneeded));
+                nrofstepsneeded = (-(m_Gain-m_Gain/(maxValwithGain))/(addinc));
+                if (nrofstepsneeded>m_attackCounter)
+                {
+                    m_attackCounter = nrofstepsneeded;
+                    m_attackIncrement = addinc;
+                }
             }
         }
+        else
+        {
+            if (maxValafterrelease > m_Limit)
+            {
+                m_state = BrickwallLimiter::State::Hold;
+                m_holdCounter = m_delaySamples;
+            }
+        }
+        
         switch (m_state)
         {
         case BrickwallLimiter::State::Off:
@@ -91,19 +150,33 @@ int BrickwallLimiter::processSamples(std::vector<std::vector<float>>& data)
             break;
         }
 
+       //if (m_attackIncrement > 0.f)
+       //     std::cout << "das darf nicht sein";
 
         // Get the data out of delay line and multiply with gain
         for (auto cc = 0; cc < nrOfInputChannels; ++cc)
         {
-            float outVal = m_delayline.at(cc).front();
+            double outVal = m_delayline.at(cc).front();
             m_delayline.at(cc).pop();
             data[cc][kk] = outVal * m_Gain;
-
+/*            if (!std::isfinite(data[cc][kk] ))
+                {
+                    switch(std::fpclassify(data[cc][kk])) 
+                    {
+                        case FP_INFINITE:  std::cout << ( "Inf");break;
+                        case FP_NAN:       std::cout << ( "NaN");break;
+                        case FP_NORMAL:    std::cout << ( "normal");break;
+                        case FP_SUBNORMAL: std::cout << ( "subnormal");break;
+                        case FP_ZERO:      std::cout << ( "zero");break;
+                        default:           std::cout << ( "unknown");break;
+                    }
+                }	
             // DBG
             if (cc == 1) data[cc][kk] = m_Gain;
 
-            if (data[cc][kk]>1.f)
+            if (fabs(data[cc][kk])>1.f)
                 data[cc][kk] = outVal * m_Gain;
+//*/                
         }
 
 
@@ -122,5 +195,5 @@ void BrickwallLimiter::buildAndResetDelayLine()
             m_delayline.at(cc).push(0.f);
     }
 
-    m_alphaRelease = exp(-1.f/(m_attackTime_ms*0.001f*m_fs));
+    m_alphaRelease = exp(-1.f/(m_releaseTime_ms*0.001f*m_fs));
 }
