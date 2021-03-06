@@ -183,6 +183,12 @@ int BrickwallLimiter::processSamples(std::vector<std::vector<double>>& data)
     }
     return 0;
 }
+void BrickwallLimiter::prepareParameter(std::unique_ptr<AudioProcessorValueTreeState>& vts)
+{
+    m_brickwallLimiterparamter.m_onoff = vts->getRawParameterValue(paramBrickwallLimiterOnOff.ID);
+	m_brickwallLimiterparamter.m_onoffOld = paramBrickwallLimiterOnOff.defaultValue;
+
+}
 void BrickwallLimiter::buildAndResetDelayLine()
 {
     m_delaySamples = int(m_attackTime_ms*0.001*m_fs + 0.5);
@@ -196,4 +202,36 @@ void BrickwallLimiter::buildAndResetDelayLine()
     }
 
     m_alphaRelease = exp(-1.f/(m_releaseTime_ms*0.001f*m_fs));
+}
+
+int BrickwallLimiterParameter::addParameter(std::vector < std::unique_ptr<RangedAudioParameter>>& paramVector)
+{
+       	paramVector.push_back(std::make_unique<AudioParameterFloat>(paramBrickwallLimiterOnOff.ID,
+		paramBrickwallLimiterOnOff.name,
+		NormalisableRange<float>(paramBrickwallLimiterOnOff.minValue, paramBrickwallLimiterOnOff.maxValue),
+		paramBrickwallLimiterOnOff.defaultValue,
+		paramBrickwallLimiterOnOff.unitName,
+		AudioProcessorParameter::genericParameter,
+		[](float value, int MaxLen) { return (String(1.0*int(value + 0.5), MaxLen)); },
+		[](const String& text) {return text.getFloatValue(); }));
+
+}
+
+BrickwallLimiterComponent::BrickwallLimiterComponent(AudioProcessorValueTreeState& vts, BrickwallLimiter& limiter)
+: m_limiter(limiter), somethingChanged(nullptr),m_vts(vts),m_scaleFactor(1.f)
+{
+
+}
+
+void BrickwallLimiterComponent::paint(Graphics& g) 
+{
+    // Reduction anzeige malen
+
+}
+void BrickwallLimiterComponent::resized()
+{
+    // oben onoff button
+
+    // dadrunter Reduction
+
 }
