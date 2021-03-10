@@ -161,19 +161,20 @@ int SynchronBlockProcessor::processBlock(std::vector <std::vector<float>>& data,
         m_mididata.addEvents(midiMessages,0,nrOfInputSamples,m_pastSamples);
         m_pastSamples += nrOfInputSamples;
     }
-    
+    return 0;
 }
 
 int SynchronBlockProcessor::setDesiredBlockSizeSamples(int desiredSize)
 {
     m_OutBlockSize = desiredSize;
     preparetoProcess(m_NrOfChannels,m_maxInputSize);
-
+    return 0;
 }
 int SynchronBlockProcessor::setDesiredBlockSizeMiliSeconds(float desiredSize_ms, float fs)
 {
     int desiredSize = int(desiredSize_ms*0.001*fs + 0.5);
     setDesiredBlockSizeSamples(desiredSize);
+    return 0;
 }
 
 int SynchronBlockProcessor::getDelay()
