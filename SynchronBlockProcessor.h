@@ -22,7 +22,7 @@ private:
     int m_OutCounter;
     int m_InCounter;
 
-    std::vector <std::vector<float>> m_mem;
+    std::vector <std::vector<float>> m_memory;
     std::vector <std::vector<float>> m_block;
     MidiBuffer m_mididata;
     int m_pastSamples;

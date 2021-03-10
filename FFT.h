@@ -17,6 +17,7 @@
         ifft(real[0 ... n/2], imag[0 ... n/2], output[0 ... n-1])
 */
 #include <vector>
+#include <memory>
 class spectrum
 {
     public:
@@ -31,6 +32,8 @@ class spectrum
         void magnitude(float *input, float *output);
         void power(float *input, float *output);
         void fft(float *input, float *real, float *imag);
+        void fft(std::vector<double>& input, std::vector<double>&real,std::vector<double>&imag);
+
         void ifft(float *real, float *imag, float *output);
         void power(float *input, std::vector<float>& output);
 
@@ -40,15 +43,19 @@ class spectrum
     protected:
         int nfft;
         int br_size;
-        int *bitrev_table;
-        double *cos_table;
-        double *sin_table;
-        double *cos2_table;
-        double *real_part;
-        double *imag_part;
+        //int *bitrev_table;
+        std::vector<int> bitrev_table;
+        std::vector<double>cos_table;
+        std::vector<double>sin_table;
+        std::vector<double>cos2_table;
+        std::vector<double>real_part;
+        std::vector<double>imag_part;
         void fftc(double *real, double *imag);
         void fftr_post(double *real, double *imag);
         void ifftr_pre(double *real, double *imag);
+        void fftc(std::vector<double>& real, std::vector<double>&imag);
+        void fftr_post(std::vector<double>&real, std::vector<double>&imag);
+        void ifftr_pre(std::vector<double>&real, std::vector<double>&imag);
         int  bitreverse(int num, int width);
         int  ilog2(int iarg);
         void fftshift(double *x, int n);

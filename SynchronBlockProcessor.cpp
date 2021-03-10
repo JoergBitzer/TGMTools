@@ -10,13 +10,13 @@ void SynchronBlockProcessor::preparetoProcess(int channels, int maxinputlen)
 {
     m_NrOfChannels = channels;
     m_maxInputSize = maxinputlen;
-    m_mem.resize(m_NrOfChannels);
+    m_memory.resize(m_NrOfChannels);
     m_block.resize(m_NrOfChannels);
     for (auto kk = 0; kk < m_NrOfChannels; ++kk)
     {
-        m_mem.at(kk).resize(2*m_OutBlockSize);
+        m_memory.at(kk).resize(2*m_OutBlockSize);
         m_block.at(kk).resize(m_OutBlockSize);
-        std::fill(m_mem.at(kk).begin(),m_mem.at(kk).end(),0.f);
+        std::fill(m_memory.at(kk).begin(),m_memory.at(kk).end(),0.f);
         std::fill(m_block.at(kk).begin(),m_block.at(kk).end(),0.f);
     }
     m_OutCounter = 0;
@@ -36,7 +36,7 @@ void SynchronBlockProcessor::processBlock(juce::AudioBuffer<float>& data, juce::
         for (auto cc = 0; cc < m_NrOfChannels; ++cc)
         {
             m_block[cc][m_InCounter] = readdatapointers[cc][kk];
-            writedatapointers[cc][kk] = m_mem[cc][m_OutCounter];
+            writedatapointers[cc][kk] = m_memory[cc][m_OutCounter];
         }
         m_InCounter++;
         if (m_InCounter == m_OutBlockSize)
@@ -61,7 +61,7 @@ void SynchronBlockProcessor::processBlock(juce::AudioBuffer<float>& data, juce::
                 {
                     for (auto sample = 0; sample < m_OutBlockSize; ++sample)
                     {
-                        m_mem[channel][sample + m_OutBlockSize] = m_block[channel][sample];
+                        m_memory[channel][sample + m_OutBlockSize] = m_block[channel][sample];
                     }
                 }
  
@@ -72,7 +72,7 @@ void SynchronBlockProcessor::processBlock(juce::AudioBuffer<float>& data, juce::
                 {
                     for (auto sample = 0; sample < m_OutBlockSize; ++sample)
                     {
-                        m_mem[channel][sample] = m_block[channel][sample];
+                        m_memory[channel][sample] = m_block[channel][sample];
                     }
                 }
             }
@@ -105,7 +105,7 @@ int SynchronBlockProcessor::processBlock(std::vector <std::vector<float>>& data,
         for (auto cc = 0; cc < m_NrOfChannels; ++cc)
         {
             m_block[cc][m_InCounter] = data[cc][kk];
-            data[cc][kk] = m_mem[cc][m_OutCounter];
+            data[cc][kk] = m_memory[cc][m_OutCounter];
         }
         m_InCounter++;
         if (m_InCounter == m_OutBlockSize)
@@ -128,7 +128,7 @@ int SynchronBlockProcessor::processBlock(std::vector <std::vector<float>>& data,
                 {
                     for (auto sample = 0; sample < m_OutBlockSize; ++sample)
                     {
-                        m_mem[channel][sample + m_OutBlockSize] = m_block[channel][sample];
+                        m_memory[channel][sample + m_OutBlockSize] = m_block[channel][sample];
                     }
                 }
  
@@ -139,7 +139,7 @@ int SynchronBlockProcessor::processBlock(std::vector <std::vector<float>>& data,
                 {
                     for (auto sample = 0; sample < m_OutBlockSize; ++sample)
                     {
-                        m_mem[channel][sample] = m_block[channel][sample];
+                        m_memory[channel][sample] = m_block[channel][sample];
                     }
                 }
             }

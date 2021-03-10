@@ -19,12 +19,7 @@
 
 spectrum::spectrum(int n)
 {
-    bitrev_table = nullptr;
-    cos_table = nullptr;
-    sin_table = nullptr;
-    cos2_table = nullptr;
-    real_part = nullptr;
-    imag_part = nullptr;
+
     setFFTSize(n);
 }
 
@@ -47,18 +42,8 @@ void spectrum::setFFTSize(int n)
     }
     // delete mem
      
-    if (bitrev_table != nullptr)
-        delete[] bitrev_table;
-    if (cos_table != nullptr)
-        delete[] cos_table;
-    if (sin_table != nullptr)
-        delete[] sin_table;
-    if (cos2_table != nullptr)
-        delete[] cos2_table;
-    if (real_part != nullptr)
-        delete[] real_part;
-    if (imag_part != nullptr)
-        delete[] imag_part;
+//    if (bitrev_table != nullptr)
+//        delete[] bitrev_table;
 
 
     nfft = n / 2;
@@ -67,7 +52,7 @@ void spectrum::setFFTSize(int n)
     br_size = nfft/2 - (1 << ((ilog2(nfft) - 1) / 2));
 
     // allocate memory for the bitreverse-table
-    bitrev_table = new int[2*br_size];
+    bitrev_table.resize(2*br_size);
 
     // compute bitreverse table
     m = 0;
@@ -83,8 +68,8 @@ void spectrum::setFFTSize(int n)
     }
 
     // allocate memory for tables of fftc
-    sin_table = new double[nfft/2];
-    cos_table = new double[nfft/2];
+    sin_table.resize(nfft/2);
+    cos_table.resize(nfft/2);
 
     // compute tables of fftc
     for (i=0; i<nfft/2; i++)
@@ -94,7 +79,7 @@ void spectrum::setFFTSize(int n)
     }
 
     // allocate memory for cos-table of fftr and ifftr
-    cos2_table = new double[nfft];
+    cos2_table.resize(nfft);
 
     // compute cos-table of real ffts
     for (i=0; i<nfft; i++)
@@ -103,8 +88,8 @@ void spectrum::setFFTSize(int n)
     }
 
     // allocate memory for real and imag part
-    real_part = new double[nfft+1];
-    imag_part = new double[nfft+1];
+    real_part.resize(nfft+1);
+    imag_part.resize(nfft+1);
 }
 
 //-------------------------------------------------------------------------
@@ -270,6 +255,27 @@ void spectrum::power(float *input, std::vector<float>& output)
 //-------------------------------------------------------------------------
 
 void spectrum::fft(double *input, double *real, double *imag)
+{
+    int i;
+
+    if (nfft == 0)
+    {
+        return;
+    }
+
+    for (i=0; i<nfft; i++)
+    {
+        real[i] = input[2*i];       // copy even samples to real part
+        imag[i] = input[2*i+1];     // copy odd  samples to imag part
+    }
+
+    // complex half length fft
+    fftc(real, imag);
+
+    // postrocessor for real fft
+    fftr_post(real, imag);
+}
+void spectrum::fft(std::vector<double>& input, std::vector<double>&real,std::vector<double>&imag)
 {
     int i;
 
@@ -603,6 +609,169 @@ void spectrum::ifftr_pre(double *real, double *imag)
     real[nfft/2] =  real[nfft/2];
     imag[nfft/2] = -imag[nfft/2];
 }
+void spectrum::fftc(std::vector<double>& real, std::vector<double>& imag)
+{
+    int    i, ig, isp, j, k, l, m;
+    double rtemp, itemp, co, si;
+
+    if (nfft == 0 )
+    {
+        return;
+    }
+
+    // bitreverse section
+    for (k=0; k<br_size; k++)
+    {
+        i = bitrev_table[2*k];
+        j = bitrev_table[2*k+1];
+
+        rtemp   = real[j];
+        real[j] = real[i];
+        real[i] = rtemp;
+
+        itemp   = imag[j];
+        imag[j] = imag[i];
+        imag[i] = itemp;
+    }
+
+    i = 0;
+    j = 1;
+    m = nfft >> 1;
+
+    // first stage
+    for (ig=0; ig<m; ig++)
+    {
+        rtemp = real[j];
+        itemp = imag[j];
+        real[j] = real[i] - rtemp;
+        real[i] = real[i] + rtemp;
+        imag[j] = imag[i] - itemp;
+        imag[i] = imag[i] + itemp;
+        i = i + 2;
+        j = j + 2;
+    }
+
+    isp = 2;
+
+    // log2(n)-1 stages
+    for (m = nfft >> 2; m > 0; m >>= 1)
+    {
+        i = 0;
+        j = isp;
+
+        for (ig=0; ig<m; ig++)
+        {
+            k = 0;
+            for (l=0; l<isp; l++)
+            {
+                co = cos_table[k];
+                si = sin_table[k];
+                k += m;
+
+                // Danielson-Lanczos formula
+                rtemp = real[j] * co + imag[j] * si;
+                itemp = imag[j] * co - real[j] * si;
+                real[j] = real[i] - rtemp;
+                real[i] = real[i] + rtemp;
+                imag[j] = imag[i] - itemp;
+                imag[i] = imag[i] + itemp;
+
+                i++;
+                j++;
+            }
+
+            i = i + isp;
+            j = j + isp;
+        }
+
+        isp <<= 1;
+    }
+}
+
+//-------------------------------------------------------------------------
+
+void spectrum::fftr_post(std::vector<double>& real, std::vector<double>& imag)
+{
+    int    i, j;
+    double x, y, rs, is, rd, id, rp, ip, ci, cj;
+
+    if (nfft == 0 )
+    {
+        return;
+    }
+
+    x = real[0];
+    y = imag[0];
+    real[0] = x + y;
+    real[nfft] = x - y;
+    imag[0] = 0.0;
+    imag[nfft] = 0.0;
+
+    for (i=1; i<nfft>>1; i++)
+    {
+        j = nfft - i;
+        ci = cos2_table[2*i];
+        cj = cos2_table[nfft-2*i];
+
+        rs = (real[i] + real[j]) * 0.5;
+        is = (imag[i] + imag[j]) * 0.5;
+        rd = (real[j] - real[i]) * 0.5;
+        id = (imag[i] - imag[j]) * 0.5;
+
+        rp = is * ci + rd * cj;
+        real[i] = rp + rs;
+        real[j] = rs - rp;
+
+        ip = rd * ci - is * cj;
+        imag[i] = ip + id;
+        imag[j] = ip - id;
+    }
+
+    real[nfft/2] =  real[nfft/2];
+    imag[nfft/2] = -imag[nfft/2];
+}
+
+//-------------------------------------------------------------------------
+
+void spectrum::ifftr_pre(std::vector<double>& real, std::vector<double>& imag)
+{
+    int    i, j;
+    double x, y, rs, is, rd, id, rp, ip, ci, cj;
+
+    if (nfft == 0)
+    {
+        return;
+    }
+
+    x = real[0];
+    y = real[nfft];
+    real[0] = (x + y) * 0.5;
+    imag[0] = (x - y) * 0.5;
+
+    for (i=1; i<nfft/2; i++)
+    {
+        j = nfft - i;
+        ci = cos2_table[2*i];
+        cj = cos2_table[nfft-2*i];
+
+        rs = (real[i] + real[j]) * 0.5;
+        rd = (real[i] - real[j]) * 0.5;
+        is = (imag[i] + imag[j]) * 0.5;
+        id = (imag[i] - imag[j]) * 0.5;
+
+        rp = is * ci + rd * cj;
+        real[i] = rp + rs;
+        real[j] = rs - rp;
+
+        ip = rd * ci - is * cj;
+        imag[i] = ip - id;
+        imag[j] = ip + id;
+    }
+
+    real[nfft/2] =  real[nfft/2];
+    imag[nfft/2] = -imag[nfft/2];
+}
+
 
 //-------------------------------------------------------------------------
 
@@ -648,19 +817,7 @@ int spectrum::get_size(void)
 
 spectrum::~spectrum(void)
 {
-    delete[] bitrev_table;
-    bitrev_table = nullptr;
-    delete[] cos_table;
-    cos_table = nullptr;
-    delete[] sin_table;
-    sin_table = nullptr;
-    delete[] cos2_table;
-    cos2_table = nullptr;
 
-    delete[] real_part;
-    real_part = nullptr;
-    delete[] imag_part;
-    imag_part = nullptr;
 }
 
 //------------------------------------------------------------------------//
