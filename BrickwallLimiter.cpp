@@ -214,7 +214,7 @@ int BrickwallLimiterParameter::addParameter(std::vector < std::unique_ptr<Ranged
 		AudioProcessorParameter::genericParameter,
 		[](float value, int MaxLen) { return (String(1.0*int(value + 0.5), MaxLen)); },
 		[](const String& text) {return text.getFloatValue(); }));
-
+    return 0;
 }
 
 BrickwallLimiterComponent::BrickwallLimiterComponent(AudioProcessorValueTreeState& vts, BrickwallLimiter& limiter)
