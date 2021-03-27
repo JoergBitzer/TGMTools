@@ -8,6 +8,7 @@ SynchronBlockProcessor::SynchronBlockProcessor()
 }
 void SynchronBlockProcessor::preparetoProcess(int channels, int maxinputlen)
 {
+    m_protectBlock.enter();
     m_NrOfChannels = channels;
     m_maxInputSize = maxinputlen;
     m_memory.resize(m_NrOfChannels);
@@ -23,9 +24,11 @@ void SynchronBlockProcessor::preparetoProcess(int channels, int maxinputlen)
     m_InCounter = 0;
     m_mididata.clear();
     m_pastSamples = 0;
+    m_protectBlock.exit();
 }
 void SynchronBlockProcessor::processBlock(juce::AudioBuffer<float>& data, juce::MidiBuffer& midiMessages)
 {
+    m_protectBlock.enter();
     int nrofBlockProcessed = 0;
     auto readdatapointers = data.getArrayOfReadPointers();
     auto writedatapointers = data.getArrayOfWritePointers();
@@ -94,10 +97,11 @@ void SynchronBlockProcessor::processBlock(juce::AudioBuffer<float>& data, juce::
         m_mididata.addEvents(midiMessages,0,nrOfInputSamples,m_pastSamples);
         m_pastSamples += nrOfInputSamples;
     }
-    
+    m_protectBlock.exit();
 }
 int SynchronBlockProcessor::processBlock(std::vector <std::vector<float>>& data, juce::MidiBuffer& midiMessages)
 {
+    m_protectBlock.enter();
     int nrofBlockProcessed = 0;
     int nrOfInputSamples = data[0].size();
     for (auto kk = 0; kk < nrOfInputSamples; ++kk)
@@ -161,6 +165,7 @@ int SynchronBlockProcessor::processBlock(std::vector <std::vector<float>>& data,
         m_mididata.addEvents(midiMessages,0,nrOfInputSamples,m_pastSamples);
         m_pastSamples += nrOfInputSamples;
     }
+    m_protectBlock.exit();
     return 0;
 }
 
