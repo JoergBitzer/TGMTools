@@ -55,6 +55,7 @@ int GeneralIR::setCoeffs(std::vector<double> b, std::vector<double> a)
 	}
 	m_newCoeffs = true;
 	m_xFadeCounter = 0;
+	m_CrossGain = 0.0;
 	return 0;
 }
 
