@@ -322,6 +322,7 @@ PresetComponent::PresetComponent(PresetHandler& ph)
 
 	m_categoriesCombo.setSelectedItemIndex(0, NotificationType::dontSendNotification);
 	m_categoriesCombo.onChange = [this]() {categorychanged(); };
+	m_categoriesCombo.setColour(ComboBox::ColourIds::backgroundColourId, JadeGray);
 	addAndMakeVisible(m_categoriesCombo);
 
 
