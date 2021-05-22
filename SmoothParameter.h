@@ -247,7 +247,6 @@ public:
         switch (m_state)
         {
             case SmoothParameterLog::SmoothStates::Off:
-                m_increment = (targetVal-m_curVal)/m_smoothtimesamples;
                 m_increment = exp((log(targetVal) - log(m_curVal))/m_smoothtimesamples);
                 m_counter = m_smoothtimesamples;
                 m_state = SmoothParameterLog::SmoothStates::Smoothing;

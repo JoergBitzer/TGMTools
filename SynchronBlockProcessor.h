@@ -2,6 +2,11 @@
 
 #include <vector>
 #include <JuceHeader.h>
+/* ToDO:
+1) Write documentation
+2) rewrite as template class for double
+
+//*/
 
 class SynchronBlockProcessor
 {
@@ -27,7 +32,4 @@ private:
     std::vector <std::vector<float>> m_block;
     MidiBuffer m_mididata;
     int m_pastSamples;
-
-
-
 };
