@@ -13,6 +13,7 @@ GeneralIR::GeneralIR()
 	m_aStatesOld.resize(m_aOld.size());
 
 	m_newCoeffs = false;
+	setXFadeSamples(2);
 }
 
 GeneralIR::GeneralIR(std::vector<double> b, std::vector<double> a)
@@ -27,6 +28,7 @@ GeneralIR::GeneralIR(std::vector<double> b, std::vector<double> a)
 	std::fill(m_bStates.begin(), m_bStates.end(), 0.0);
 	std::fill(m_aStates.begin(), m_aStates.end(), 0.0);
 	m_newCoeffs = false;
+	setXFadeSamples(2);
 }
 
 int GeneralIR::setCoeffs(std::vector<double> b, std::vector<double> a)
@@ -52,6 +54,7 @@ int GeneralIR::setCoeffs(std::vector<double> b, std::vector<double> a)
 		std::fill(m_aStates.begin(), m_aStates.end(), 0.0);
 	}
 	m_newCoeffs = true;
+	m_xFadeCounter = 0;
 	return 0;
 }
 
@@ -145,7 +148,10 @@ int GeneralIR::setXFadeSamples(int nrofsamples)
 {
 	m_xFadeTimeSamples = nrofsamples;
 	m_xFadeCounter = 0;
-	m_StepSize = 1.0 / (m_xFadeTimeSamples - 1);
+	if (m_xFadeTimeSamples >= 2)
+		m_StepSize = 1.0 / (m_xFadeTimeSamples - 1);
+	else
+		m_StepSize = 1.0;
 	m_CrossGain = 0.0;
 	return 0;
 }
