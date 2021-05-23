@@ -1,51 +1,60 @@
 #pragma once
 /**
  * @file SOSFilter.h
- * @author J. Bitzer @ TGM @ JAde Hochschule
- * @brief This class is a second order section filter, It provides clickfree time variant processing
+ * @author J. Bitzer @ TGM @ Jade Hochschule
+ * @brief This template class is a second order section filter, It provides clickfree time variant processing
  * the smoothing is done via blending not via morphing (fast, but sonically sub-optimal)
- * @version 0.1
+ * @version 0.8
  * @date 2021-05-22
  * 
  * @copyright Copyright (c) 2021 Licence: BSD 3-clause
  * 
  */
-/*
-    1) change to template class for double precision
+/* ToDO:
+	1) non lienarities with different Forms (clip, tanh)
 //*/
 #include <vector>
-class SOSFilter
+template <class T> class SOSFilter
 {
 public:
     SOSFilter(){m_b0 = 1.0; m_b1 = 0.0; m_b2 = 0.0; m_a1 = 0.0; m_a2 = 0.0;
         m_b0Old = 1.0; m_b1Old = 0.0; m_b2Old = 0.0; m_a1Old = 0.0; m_a2Old = 0.0;
-   	    m_newCoeffs = false; setXFadeSamples(30);
+   	    m_newCoeffs = false; setXFadeSamples(30); m_useNL = true; m_clipVal = 3.f;
         reset(); };
-    SOSFilter(float b0, float b1, float b2, float a1, float a2){m_b0 = b0; m_b1 = b1; m_b2 = b2; m_a1 = a1; m_a2 = a2;
+    SOSFilter(T b0, T b1, T b2, T a1, T a2){m_b0 = b0; m_b1 = b1; m_b2 = b2; m_a1 = a1; m_a2 = a2;
         m_b0Old = b0; m_b1Old = b1; m_b2Old = b2; m_a1Old = a1; m_a2Old = a2;
-   	    m_newCoeffs = false; setXFadeSamples(30);
+   	    m_newCoeffs = false; setXFadeSamples(30); m_useNL = true; m_clipVal = 3.f;
         reset(); };
 
     void reset(){
         m_statea1 = 0.0; m_statea2 = 0.0; m_stateb1 = 0.0; m_stateb2 = 0.0;
         m_statea1Old = 0.0; m_statea2Old = 0.0;};
 
-	int setCoeffs(float b0, float b1, float b2, float a1, float a2){
+	int setCoeffs(T b0, T b1, T b2, T a1, T a2){
         m_b0Old = m_b0; m_b1Old = m_b1; m_b2Old = m_b2; m_a1Old = m_a1; m_a2Old = m_a2;
         m_statea1Old = m_statea1; m_statea2Old = m_statea2;
         m_b0 = b0; m_b1 = b1; m_b2 = b2; m_a1 = a1; m_a2 = a2;
         m_newCoeffs = true; m_xFadeCounter = 0; m_CrossGain = 0.0;};
 	
-	int processData(std::vector<double>& in, std::vector<double>& out)
+	int processData(std::vector<T>& in, std::vector<T>& out)
     {
 	    if (in.size() != out.size())
 		    return -1;
 
 	    for (unsigned int kk = 0; kk < in.size(); kk++)
 	    {
-            float curSample = in[kk];
+            T curSample = in[kk];
 			out[kk] = m_b0*curSample + m_b1*m_stateb1 + m_b2*m_stateb2 - m_a1*m_statea1 - m_a2*m_statea2;
-    		m_statea2 = m_statea1;
+			// non linearities for instable filters
+			if (m_useNL)
+			{
+				
+				if (out[kk]>m_clipVal)
+					out[kk] = m_clipVal;
+				if (out[kk]<-m_clipVal)
+					out[kk] = -m_clipVal;
+			}
+			m_statea2 = m_statea1;
             m_statea1 = out[kk];
             m_stateb2 = m_stateb1;
             m_stateb1 = curSample;
@@ -53,7 +62,7 @@ public:
 
 	    return 0;
     };
-	int processDataTV(std::vector<double>& in, std::vector<double>& out)
+	int processDataTV(std::vector<T>& in, std::vector<T>& out)
     {
 	    if (in.size() != out.size())
 		    return -1;
@@ -66,14 +75,30 @@ public:
 	    {
 		    for (unsigned int kk = 0; kk < in.size(); kk++)
 		    {
-			    float newOut = 0.0;
-			    float oldOut = 0.0;
-                float curSample = in[kk];
+			    T newOut = 0.0;
+			    T oldOut = 0.0;
+                T curSample = in[kk];
 			    newOut = m_b0*curSample + m_b1*m_stateb1 + m_b2*m_stateb2 ;
                 oldOut = m_b0Old*curSample + m_b1Old*m_stateb1 + m_b2Old*m_stateb2 ;
     			newOut -= (m_a1*m_statea1 + m_a2*m_statea2);
     			oldOut -= (m_a1Old*m_statea1Old + m_a2Old*m_statea2Old);
-    		
+
+				// non linearities for instable filters
+				if (m_useNL)
+				{
+
+					if (newOut>m_clipVal)
+						newOut = m_clipVal;
+					if (newOut<-m_clipVal)
+						newOut = -m_clipVal;
+
+					if (oldOut>m_clipVal)
+						oldOut = m_clipVal;
+					if (oldOut<-m_clipVal)
+						oldOut = -m_clipVal;
+
+				}
+
                 m_statea2 = m_statea1;
                 m_statea1 = newOut;
                 m_statea2Old = m_statea1Old;
@@ -106,22 +131,26 @@ public:
 	    return 0;
     }
 
-
+	void setClipValue (T clipval){m_clipVal = clipVal;};
 private:
-    float m_b0,m_b1,m_b2;
-    float m_a1,m_a2;
+    T m_b0,m_b1,m_b2;
+    T m_a1,m_a2;
 
-    float m_stateb1,m_stateb2;
-    float m_statea1,m_statea2;
+    T m_stateb1,m_stateb2;
+    T m_statea1,m_statea2;
 
 	bool m_newCoeffs;
 	int m_xFadeCounter;
 	int m_xFadeTimeSamples;
-	float m_CrossGain;
-	float m_StepSize;
+	T m_CrossGain;
+	T m_StepSize;
 
-    float m_b0Old,m_b1Old,m_b2Old;
-    float m_a1Old,m_a2Old;
-    float m_statea1Old,m_statea2Old;
+    T m_b0Old,m_b1Old,m_b2Old;
+    T m_a1Old,m_a2Old;
+    T m_statea1Old,m_statea2Old;
 
+	bool m_useNL;
+	T m_clipVal;
 };
+//SOSFilter <float>;
+//SOSFilter <double>;
