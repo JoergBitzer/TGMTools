@@ -5,40 +5,40 @@
 #include <fstream>
 //#include <JuceHeader.h>
 
-BrickwallLimiter::BrickwallLimiter()
+template <class T> BrickwallLimiter<T>::BrickwallLimiter()
 :m_fs(48000.0),m_nrofchannels(2),m_Limit(1.0),m_attackTime_ms(2.0),m_releaseTime_ms(100.0),m_Gain(1.0),
 m_attackCounter(0),m_state(BrickwallLimiter::State::Off)
 {
     buildAndResetDelayLine();
 }
-BrickwallLimiter::BrickwallLimiter(double sampleRate)
+template <class T> BrickwallLimiter<T>::BrickwallLimiter(T sampleRate)
 :m_fs(sampleRate),m_nrofchannels(2), m_Limit(1.0),m_attackTime_ms(2.0),m_releaseTime_ms(100.0),m_Gain(1.0),
 m_attackCounter(0),m_state(BrickwallLimiter::State::Off)
 {
     buildAndResetDelayLine();
 }
 
-void BrickwallLimiter::prepareToPlay(double sampleRate, int nrofchannels)
+/*template <class T> void BrickwallLimiter<T>::prepareToPlay(T sampleRate, int nrofchannels)
 {
     m_fs = sampleRate;
     m_nrofchannels = nrofchannels;
     buildAndResetDelayLine();
-}
+}//*/
 
 double g_maxValLimit(1000.0);
 
-int BrickwallLimiter::processSamples(std::vector<std::vector<double>>& data)
+template <class T> int BrickwallLimiter<T>::processSamples(std::vector<std::vector<T>>& data)
 {
     size_t nrOfInputChannels= data.size();
     size_t nrOfSamples = data[0].size();
 
     for (auto kk = 0; kk < nrOfSamples; ++kk)
     {
-        double maxVal = -1000.f;
+        T maxVal = -1000.f;
         // put the input into delay and look for maximum over all channels
         for (auto cc = 0; cc < nrOfInputChannels; ++cc)
         {
-            double inVal = data[cc][kk];
+            T inVal = data[cc][kk];
             if (inVal > g_maxValLimit)
                 inVal = g_maxValLimit;
             
@@ -49,10 +49,12 @@ int BrickwallLimiter::processSamples(std::vector<std::vector<double>>& data)
             if (fabs(inVal)>maxVal)
                 maxVal = fabs(inVal);
         }
-        double maxValwithGain = maxVal*(m_Gain);
-        double maxValafterrelease = maxValwithGain;
+        processOneMaxVal(maxVal);
+
+/*        T maxValwithGain = maxVal*(m_Gain);
+        T maxValafterrelease = maxValwithGain;
         int releaseSteps;
-        double mgainhelp;
+        T mgainhelp;
         switch (m_state)
         {
         case BrickwallLimiter::State::Off:
@@ -87,7 +89,7 @@ int BrickwallLimiter::processSamples(std::vector<std::vector<double>>& data)
         {
             m_state = BrickwallLimiter::State::Att;
             
-            double attackIncrement = -(m_Gain-m_Gain/(maxValwithGain))/m_delaySamples;
+            T attackIncrement = -(m_Gain-m_Gain/(maxValwithGain))/m_delaySamples;
             if (attackIncrement < m_attackIncrement)
             {
                 m_attackCounter = m_delaySamples;
@@ -95,9 +97,9 @@ int BrickwallLimiter::processSamples(std::vector<std::vector<double>>& data)
             }
             else
             {
-                double nrofstepsneeded = (-(m_Gain-m_Gain/(maxValwithGain))/m_attackIncrement);
-                double nrofstepsneededfrac = nrofstepsneeded - int(nrofstepsneeded);
-                double addinc = -(m_Gain-m_Gain/(maxValwithGain))/(int(nrofstepsneeded));
+                T nrofstepsneeded = (-(m_Gain-m_Gain/(maxValwithGain))/m_attackIncrement);
+                T nrofstepsneededfrac = nrofstepsneeded - int(nrofstepsneeded);
+                T addinc = -(m_Gain-m_Gain/(maxValwithGain))/(int(nrofstepsneeded));
                 nrofstepsneeded = (-(m_Gain-m_Gain/(maxValwithGain))/(addinc));
                 if (nrofstepsneeded>m_attackCounter)
                 {
@@ -152,44 +154,70 @@ int BrickwallLimiter::processSamples(std::vector<std::vector<double>>& data)
 
        //if (m_attackIncrement > 0.f)
        //     std::cout << "das darf nicht sein";
-
+//*/
         // Get the data out of delay line and multiply with gain
         for (auto cc = 0; cc < nrOfInputChannels; ++cc)
         {
-            double outVal = m_delayline.at(cc).front();
+            T outVal = m_delayline.at(cc).front();
             m_delayline.at(cc).pop();
             data[cc][kk] = outVal * m_Gain;
-/*            if (!std::isfinite(data[cc][kk] ))
-                {
-                    switch(std::fpclassify(data[cc][kk])) 
-                    {
-                        case FP_INFINITE:  std::cout << ( "Inf");break;
-                        case FP_NAN:       std::cout << ( "NaN");break;
-                        case FP_NORMAL:    std::cout << ( "normal");break;
-                        case FP_SUBNORMAL: std::cout << ( "subnormal");break;
-                        case FP_ZERO:      std::cout << ( "zero");break;
-                        default:           std::cout << ( "unknown");break;
-                    }
-                }	
-            // DBG
-            if (cc == 1) data[cc][kk] = m_Gain;
-
-            if (fabs(data[cc][kk])>1.f)
-                data[cc][kk] = outVal * m_Gain;
-//*/                
+              
         }
 
 
     }
     return 0;
 }
-void BrickwallLimiter::prepareParameter(std::unique_ptr<AudioProcessorValueTreeState>& vts)
+
+template <class T> int BrickwallLimiter<T>::processSamples(juce::AudioBuffer<T>& data)
+{
+    size_t totalNrChannels = static_cast<size_t>(data.getNumChannels());
+    auto readPointer = data.getArrayOfReadPointers();
+    auto writePointer = data.getArrayOfWritePointers();
+    size_t nrOfSamples = static_cast<size_t>(data.getNumSamples());
+    for (auto kk = 0; kk < nrOfSamples; ++kk)
+    {
+        T maxVal = -1000.f;
+        // put the input into delay and look for maximum over all channels
+        for (auto cc = 0; cc < totalNrChannels; ++cc)
+        {
+            T inVal = readPointer[cc][kk];
+            if (inVal > g_maxValLimit)
+                inVal = g_maxValLimit;
+            
+            if (inVal < -g_maxValLimit)
+                inVal = -g_maxValLimit;
+
+            m_delayline.at(cc).push(inVal);
+            if (fabs(inVal)>maxVal)
+                maxVal = fabs(inVal);
+        }
+    
+        processOneMaxVal(maxVal);
+    
+        // get value out of delay line and multiply with gain
+        for (auto cc = 0; cc < totalNrChannels; ++cc)
+        {
+            T outVal = m_delayline.at(cc).front();
+            m_delayline.at(cc).pop();
+            writePointer[cc][kk] = outVal * m_Gain;
+        }
+    
+    
+    }
+
+
+}
+
+
+
+template <class T> void BrickwallLimiter<T>::prepareParameter(std::unique_ptr<AudioProcessorValueTreeState>& vts)
 {
     m_brickwallLimiterparamter.m_onoff = vts->getRawParameterValue(paramBrickwallLimiterOnOff.ID);
 	m_brickwallLimiterparamter.m_onoffOld = paramBrickwallLimiterOnOff.defaultValue;
 
 }
-void BrickwallLimiter::buildAndResetDelayLine()
+template <class T> void BrickwallLimiter<T>::buildAndResetDelayLine()
 {
     m_delaySamples = int(m_attackTime_ms*0.001*m_fs + 0.5);
     m_delayline.resize(m_nrofchannels);
@@ -217,21 +245,45 @@ int BrickwallLimiterParameter::addParameter(std::vector < std::unique_ptr<Ranged
     return 0;
 }
 
-BrickwallLimiterComponent::BrickwallLimiterComponent(AudioProcessorValueTreeState& vts, BrickwallLimiter& limiter)
+template <class T> BrickwallLimiterComponent<T>::BrickwallLimiterComponent(AudioProcessorValueTreeState& vts, BrickwallLimiter<T>& limiter)
 : m_limiter(limiter), somethingChanged(nullptr),m_vts(vts),m_scaleFactor(1.f)
 {
 
 }
 
-void BrickwallLimiterComponent::paint(Graphics& g) 
+template <class T> void BrickwallLimiterComponent<T>::paint(Graphics& g) 
 {
     // Reduction anzeige malen
 
 }
-void BrickwallLimiterComponent::resized()
+template <class T> void BrickwallLimiterComponent<T>::resized()
 {
     // oben onoff button
 
     // dadrunter Reduction
 
 }
+// explicit instantiations
+template class BrickwallLimiter<float>;
+template class BrickwallLimiter<double>;
+
+
+// debug code
+/*            if (!std::isfinite(data[cc][kk] ))
+                {
+                    switch(std::fpclassify(data[cc][kk])) 
+                    {
+                        case FP_INFINITE:  std::cout << ( "Inf");break;
+                        case FP_NAN:       std::cout << ( "NaN");break;
+                        case FP_NORMAL:    std::cout << ( "normal");break;
+                        case FP_SUBNORMAL: std::cout << ( "subnormal");break;
+                        case FP_ZERO:      std::cout << ( "zero");break;
+                        default:           std::cout << ( "unknown");break;
+                    }
+                }	
+            // DBG
+            if (cc == 1) data[cc][kk] = m_Gain;
+
+            if (fabs(data[cc][kk])>1.f)
+                data[cc][kk] = outVal * m_Gain;
+//*/  
