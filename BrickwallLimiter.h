@@ -35,6 +35,7 @@ public:
     T getReduction(){return m_curReduction;};
     int getDelaySamples(){return m_delaySamples;};
     T getReduction_db(){return 20.0*log10(m_Gain+0.00000001);};
+    void setBypass(bool bypass){m_bypass = bypass;};
 private:
     enum class State
     {
@@ -56,7 +57,7 @@ private:
     T m_Gain;
     int m_attackCounter;
     int m_holdCounter;
-
+    bool m_bypass;
     T m_attackIncrement;
     BrickwallLimiter::State m_state;
     void buildAndResetDelayLine();

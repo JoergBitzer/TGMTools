@@ -7,13 +7,13 @@
 
 template <class T> BrickwallLimiter<T>::BrickwallLimiter()
 :m_fs(48000.0),m_nrofchannels(2),m_Limit(1.0),m_attackTime_ms(2.0),m_releaseTime_ms(100.0),m_Gain(1.0),
-m_attackCounter(0),m_state(BrickwallLimiter::State::Off)
+m_attackCounter(0),m_state(BrickwallLimiter::State::Off),m_bypass(false)
 {
     buildAndResetDelayLine();
 }
 template <class T> BrickwallLimiter<T>::BrickwallLimiter(T sampleRate)
 :m_fs(sampleRate),m_nrofchannels(2), m_Limit(1.0),m_attackTime_ms(2.0),m_releaseTime_ms(100.0),m_Gain(1.0),
-m_attackCounter(0),m_state(BrickwallLimiter::State::Off)
+m_attackCounter(0),m_state(BrickwallLimiter::State::Off),m_bypass(false)
 {
     buildAndResetDelayLine();
 }
@@ -160,11 +160,12 @@ template <class T> int BrickwallLimiter<T>::processSamples(std::vector<std::vect
         {
             T outVal = m_delayline.at(cc).front();
             m_delayline.at(cc).pop();
-            data[cc][kk] = outVal * m_Gain;
+            if (m_bypass)
+                data[cc][kk] = outVal;
+            else
+                data[cc][kk] = outVal * m_Gain;
               
         }
-
-
     }
     return 0;
 }
@@ -200,13 +201,15 @@ template <class T> int BrickwallLimiter<T>::processSamples(juce::AudioBuffer<T>&
         {
             T outVal = m_delayline.at(cc).front();
             m_delayline.at(cc).pop();
-            writePointer[cc][kk] = outVal * m_Gain;
+            if (m_bypass)
+                writePointer[cc][kk] = outVal;
+            else
+                writePointer[cc][kk] = outVal * m_Gain;
         }
     
     
     }
-
-
+    return 0;
 }
 
 
