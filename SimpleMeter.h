@@ -72,3 +72,46 @@ private:
     size_t m_displaychannels; 
 
 };
+
+/* from musicdsp.org. This should make things clearer in the code
+float MMtoDB(float mm)
+{
+        float db;
+
+        mm = 100. - mm;
+
+        if (mm <= 0.) {
+                db = 10.;
+        } else if (mm < 48.) {
+                db = 10. - 5./12. * mm;
+        } else if (mm < 84.) {
+                db = -10. - 10./12. * (mm - 48.);
+        } else if (mm < 96.) {
+                db = -40. - 20./12. * (mm - 84.);
+        } else if (mm < 100.) {
+                db = -60. - 35. * (mm - 96.);
+        } else db = -200.;
+        return db;
+}
+
+float DBtoMM(float db)
+{
+        float mm;
+        if (db >= 10.) {
+                mm = 0.;
+        } else if (db > -10.) {
+                mm = -12./5. * (db - 10.);
+        } else if (db > -40.) {
+                mm = 48. - 12./10. * (db + 10.);
+        } else if (db > -60.) {
+                mm = 84. - 12./20. * (db + 40.);
+        } else if (db > -200.) {
+                mm = 96. - 1./35. * (db + 60.);
+        } else mm = 100.;
+
+        mm = 100. - mm;
+
+        return mm;
+}
+
+//*/
