@@ -1,25 +1,19 @@
 #include "SynchronBlockProcessor.h"
 
 SynchronBlockProcessor::SynchronBlockProcessor()
-:m_NrOfChannels(2),m_OutBlockSize(256),m_maxInputSize(256)
+:m_NrOfChannels(2),m_OutBlockSize(256)
 {
-    preparetoProcess(m_NrOfChannels,m_maxInputSize);
-    
+    preparetoProcess(m_NrOfChannels,m_OutBlockSize);
 }
-void SynchronBlockProcessor::preparetoProcess(int channels, int maxinputlen)
+void SynchronBlockProcessor::preparetoProcess(int channels, int desiredSize)
 {
     m_protectBlock.enter();
+    m_OutBlockSize = desiredSize;
     m_NrOfChannels = channels;
-    m_maxInputSize = maxinputlen;
-    m_memory.resize(m_NrOfChannels);
-    m_block.resize(m_NrOfChannels);
-    for (auto kk = 0; kk < m_NrOfChannels; ++kk)
-    {
-        m_memory.at(kk).resize(2*m_OutBlockSize);
-        m_block.at(kk).resize(m_OutBlockSize);
-        std::fill(m_memory.at(kk).begin(),m_memory.at(kk).end(),0.f);
-        std::fill(m_block.at(kk).begin(),m_block.at(kk).end(),0.f);
-    }
+    m_memory.setSize(m_NrOfChannels,2*m_OutBlockSize);
+    m_memory.clear();
+    m_block.setSize(m_NrOfChannels,m_OutBlockSize);
+    m_block.clear();
     m_OutCounter = 0;
     m_InCounter = 0;
     m_mididata.clear();
@@ -33,13 +27,17 @@ void SynchronBlockProcessor::processBlock(juce::AudioBuffer<float>& data, juce::
     auto readdatapointers = data.getArrayOfReadPointers();
     auto writedatapointers = data.getArrayOfWritePointers();
     int nrOfInputSamples = data.getNumSamples();
+    auto blockreaddatapointers = m_block.getArrayOfReadPointers();
+    auto blockwritedatapointers = m_block.getArrayOfWritePointers();
+    auto memreaddatapointers = m_memory.getArrayOfReadPointers();
+    auto memwritedatapointers = m_memory.getArrayOfWritePointers();
 
     for (auto kk = 0; kk < nrOfInputSamples; ++kk)
     {
         for (auto cc = 0; cc < m_NrOfChannels; ++cc)
         {
-            m_block[cc][m_InCounter] = readdatapointers[cc][kk];
-            writedatapointers[cc][kk] = m_memory[cc][m_OutCounter];
+            blockwritedatapointers[cc][m_InCounter] = readdatapointers[cc][kk];
+            writedatapointers[cc][kk] = memreaddatapointers[cc][m_OutCounter];
         }
         m_InCounter++;
         if (m_InCounter == m_OutBlockSize)
@@ -64,7 +62,7 @@ void SynchronBlockProcessor::processBlock(juce::AudioBuffer<float>& data, juce::
                 {
                     for (auto sample = 0; sample < m_OutBlockSize; ++sample)
                     {
-                        m_memory[channel][sample + m_OutBlockSize] = m_block[channel][sample];
+                        memwritedatapointers[channel][sample + m_OutBlockSize] = blockreaddatapointers[channel][sample];
                     }
                 }
  
@@ -75,7 +73,7 @@ void SynchronBlockProcessor::processBlock(juce::AudioBuffer<float>& data, juce::
                 {
                     for (auto sample = 0; sample < m_OutBlockSize; ++sample)
                     {
-                        m_memory[channel][sample] = m_block[channel][sample];
+                        memwritedatapointers[channel][sample] = blockreaddatapointers[channel][sample];
                     }
                 }
             }
@@ -98,88 +96,6 @@ void SynchronBlockProcessor::processBlock(juce::AudioBuffer<float>& data, juce::
         m_pastSamples += nrOfInputSamples;
     }
     m_protectBlock.exit();
-}
-int SynchronBlockProcessor::processBlock(std::vector <std::vector<float>>& data, juce::MidiBuffer& midiMessages)
-{
-    m_protectBlock.enter();
-    int nrofBlockProcessed = 0;
-    int nrOfInputSamples = data[0].size();
-    for (auto kk = 0; kk < nrOfInputSamples; ++kk)
-    {
-        for (auto cc = 0; cc < m_NrOfChannels; ++cc)
-        {
-            m_block[cc][m_InCounter] = data[cc][kk];
-            data[cc][kk] = m_memory[cc][m_OutCounter];
-        }
-        m_InCounter++;
-        if (m_InCounter == m_OutBlockSize)
-        {
-            m_InCounter = 0;
-            if (kk < m_OutBlockSize)
-                m_mididata.addEvents(midiMessages,0, kk ,m_pastSamples);
-            else
-            {
-                m_mididata.addEvents(midiMessages,kk-m_OutBlockSize,m_OutBlockSize,-(kk-m_OutBlockSize));
-            }
-            nrofBlockProcessed++;
-            processSynchronBlock(m_block,m_mididata);            
-            m_mididata.clear();
-            m_pastSamples = 0;
-                // copy block into mem
-            if (m_OutCounter < m_OutBlockSize)
-            {
-                for (auto channel = 0; channel < m_NrOfChannels; ++channel)
-                {
-                    for (auto sample = 0; sample < m_OutBlockSize; ++sample)
-                    {
-                        m_memory[channel][sample + m_OutBlockSize] = m_block[channel][sample];
-                    }
-                }
- 
-            }
-            else
-            {
-                for (auto channel = 0; channel < m_NrOfChannels; ++channel)
-                {
-                    for (auto sample = 0; sample < m_OutBlockSize; ++sample)
-                    {
-                        m_memory[channel][sample] = m_block[channel][sample];
-                    }
-                }
-            }
-            
-        }
-        m_OutCounter++;
-        if (m_OutCounter == 2*m_OutBlockSize)
-            m_OutCounter = 0;
-    }
-    if (nrofBlockProcessed>0)
-    {
-        int lastMidiSamples = nrOfInputSamples- m_InCounter;
-        m_mididata.addEvents(midiMessages,lastMidiSamples, m_InCounter,-lastMidiSamples);
-        m_pastSamples += m_InCounter;
-
-    }
-    else
-    {
-        m_mididata.addEvents(midiMessages,0,nrOfInputSamples,m_pastSamples);
-        m_pastSamples += nrOfInputSamples;
-    }
-    m_protectBlock.exit();
-    return 0;
-}
-
-int SynchronBlockProcessor::setDesiredBlockSizeSamples(int desiredSize)
-{
-    m_OutBlockSize = desiredSize;
-    preparetoProcess(m_NrOfChannels,m_maxInputSize);
-    return 0;
-}
-int SynchronBlockProcessor::setDesiredBlockSizeMiliSeconds(float desiredSize_ms, float fs)
-{
-    int desiredSize = int(desiredSize_ms*0.001*fs + 0.5);
-    setDesiredBlockSizeSamples(desiredSize);
-    return 0;
 }
 
 int SynchronBlockProcessor::getDelay()
