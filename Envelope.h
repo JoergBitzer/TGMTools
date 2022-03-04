@@ -46,10 +46,65 @@ public:
 	void setSustainLevel(double level);
 	void setReleaseRate(double rel_ms);
 	void setMaxLevel(double level) { m_maxLevel = level; };
+	void reset()
+	{
+		m_envGain = 0.0;
+		m_envelopePhase = envelopePhases::Off;
+		m_sampleCounter = 0.0;
+	}
 	void setInvertOnOff(bool onoff) {
 		m_invertOn = onoff;
 	};
 	envelopePhases getEnvelopeStatus() { return m_envelopePhase; };
+	float updateEnvelopePhase()
+	{
+		switch (m_envelopePhase)
+		{
+		case envelopePhases::Off:
+			m_envGain = 0.0;
+			break;
+
+		case envelopePhases::Delay:
+			m_sampleCounter -= 1;
+			m_envGain = 0.0;
+			if (m_sampleCounter <= 0)
+				m_envelopePhase = envelopePhases::Attack;
+			else
+				break;
+
+		case envelopePhases::Attack:
+			m_envGain = m_alphaAtt * m_envGain + (1.0 - m_alphaAtt) * m_attOver;
+			if (m_envGain >= 1.0)
+			{
+				m_envelopePhase = envelopePhases::Hold;
+				m_envGain = 1.0;
+				m_sampleCounter = m_holdSamples;
+			}
+			break;
+
+		case envelopePhases::Hold:
+			m_sampleCounter -= 1;
+			m_envGain = 1.0;
+			if (m_sampleCounter <= 0)
+				m_envelopePhase = envelopePhases::Decay;
+			else
+				break;
+
+		case envelopePhases::Decay:
+			m_envGain = m_alphaDec * m_envGain + (1.0 - m_alphaDec) * m_sustainLevel;
+			break;
+		case envelopePhases::Release:
+			m_envGain = m_alphaRel * m_envGain;
+			if (m_envGain <= 1.0e-5)
+				m_envelopePhase = envelopePhases::Off;
+			break;
+
+		}
+		if (m_invertOn)
+			return m_maxLevel * (1.0-m_envGain);
+		else
+			return m_maxLevel*m_envGain;
+	}
 
 protected:
 	void updateTimeConstants(void);

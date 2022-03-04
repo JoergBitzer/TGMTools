@@ -5,21 +5,19 @@ Envelope::Envelope()
 {
 	m_fs = 1.0;
 
+	// initial values
 	m_delTime_ms = 0.0;
-
-	m_alphaAtt = 0.0;
+	m_tauAtt_ms	= 0.1;
+	m_tauDec_ms	= 0.1;
 	m_attOver = 1.0 / 0.77; // from Will Pirkle Book
-
 	m_holdTime_ms = 0.0;
-
-	m_alphaDec = 0.0;
-
-	m_envGain = 0.0;
-	m_envelopePhase = envelopePhases::Off;
-
-	m_sampleCounter = 0.0;
+	m_tauRel_ms	= 0.1;
+	m_sustainLevel = 1.0;
 	m_maxLevel = 1.0;
 	m_invertOn = false;
+	m_envelopePhase = envelopePhases::Off;
+	updateTimeConstants();
+	reset();
 }
 
 Envelope::~Envelope()
@@ -30,57 +28,7 @@ int Envelope::getData(std::vector<double>& data)
 {
 	for (unsigned int kk = 0; kk < data.size(); kk++)
 	{
-		double Gain;
-		double Samples;
-		switch (m_envelopePhase)
-		{
-		case envelopePhases::Off:
-			m_envGain = 0.0;
-			break;
-
-		case envelopePhases::Delay:
-			m_sampleCounter -= 1;
-			m_envGain = 0.0;
-			if (m_sampleCounter <= 0)
-				m_envelopePhase = envelopePhases::Attack;
-			else
-				break;
-
-		case envelopePhases::Attack:
-			Gain = m_alphaAtt * m_envGain + (1.0 - m_alphaAtt) * m_attOver;
-			m_envGain = Gain;
-			if (m_envGain >= 1.0)
-			{
-				m_envelopePhase = envelopePhases::Hold;
-				m_envGain = 1.0;
-				m_sampleCounter = m_holdSamples;
-			}
-			break;
-
-		case envelopePhases::Hold:
-			m_sampleCounter -= 1;
-			m_envGain = 1.0;
-			if (m_sampleCounter <= 0)
-				m_envelopePhase = envelopePhases::Decay;
-			else
-				break;
-
-		case envelopePhases::Decay:
-			Gain = m_alphaDec * m_envGain + (1.0 - m_alphaDec) * m_sustainLevel;
-			m_envGain = Gain;
-			break;
-		case envelopePhases::Release:
-			Gain = m_alphaRel * m_envGain;
-			m_envGain = Gain;
-			if (m_envGain <= 1.0e-5)
-				m_envelopePhase = envelopePhases::Off;
-			break;
-
-		}
-		if (m_invertOn)
-			data.at(kk) = m_maxLevel * (1.0-m_envGain);
-		else
-			data.at(kk) = m_maxLevel*m_envGain;
+		data[kk] = updateEnvelopePhase();
 	}
 	return 0;
 }
