@@ -96,6 +96,61 @@ void Envelope::updateTimeConstants(void)
 	m_delSamples = floor(m_delTime_ms * m_fs * 0.001 + 0.5);
 
 }
+
+int Envelope::updateParameter()
+{
+    float newval = *(m_envparams.m_delay);
+    if ( newval != m_envparams.m_delayOld)
+    {
+        m_envparams.m_delayOld = newval;
+        setDelayTime(newval);
+    }
+    newval = *(m_envparams.m_attack);
+    if ( newval != m_envparams.m_attackOld)
+    {
+        m_envparams.m_attackOld = newval;
+        setAttackRate(exp(newval));
+    }
+    newval = *(m_envparams.m_hold);
+    if ( newval != m_envparams.m_holdOld)
+    {
+        m_envparams.m_holdOld = newval;
+        setHoldTime(newval);
+    }
+    newval = *(m_envparams.m_decay);
+    if ( newval != m_envparams.m_decayOld)
+    {
+        m_envparams.m_decayOld = newval;
+        setDecayRate(exp(newval));
+    }
+    newval = *(m_envparams.m_sustain);
+    if ( newval != m_envparams.m_sustainOld)
+    {
+        m_envparams.m_sustainOld = newval;
+        setSustainLevel(newval);
+    }
+    newval = *(m_envparams.m_release);
+    if ( newval != m_envparams.m_releaseOld)
+    {
+        m_envparams.m_releaseOld = newval;
+        setReleaseRate(exp(newval));
+    }
+    newval = *(m_envparams.m_inverted);
+    if ( newval != m_envparams.m_invertedOld)
+    {
+        m_envparams.m_invertedOld = newval;
+        setInvertOnOff(newval);
+    }
+    newval = *(m_envparams.m_level);
+    if ( newval != m_envparams.m_levelOld)
+    {
+        m_envparams.m_levelOld = newval;
+        setMaxLevel(newval);
+    }
+
+
+}
+
 #ifdef USE_JUCE
 int EnvelopeParameter::addParameter(std::vector < std::unique_ptr<RangedAudioParameter>>& paramVector, int instance)
 {
@@ -171,6 +226,32 @@ int EnvelopeParameter::addParameter(std::vector < std::unique_ptr<RangedAudioPar
 	}
 	return 0;
 }
+
+int EnvelopeParameter::connectParameter(AudioProcessorValueTreeState* vts, int instance)
+{
+    m_delay = vts->getRawParameterValue(paramEnvDelay.ID[instance]);
+    m_delayOld = *m_delay;
+    m_attack = vts->getRawParameterValue(paramEnvAttack.ID[instance]);
+    m_attackOld = *m_attack;     
+
+    m_hold = vts->getRawParameterValue(paramEnvHold.ID[instance]);
+    m_holdOld = *m_hold;
+    m_decay = vts->getRawParameterValue(paramEnvDecay.ID[instance]);
+    m_decayOld = *m_decay;     
+
+    m_sustain = vts->getRawParameterValue(paramEnvSustain.ID[instance]);
+    m_sustainOld = *m_sustain;
+    m_release = vts->getRawParameterValue(paramEnvRelease.ID[instance]);
+    m_releaseOld = *m_release;     
+
+    m_level = vts->getRawParameterValue(paramEnvLevel.ID[instance]);
+    m_levelOld = *m_level;
+    m_inverted = vts->getRawParameterValue(paramEnvInvert.ID[instance]);
+    m_invertedOld = *m_inverted;     
+
+}
+
+
 
 EnvelopeParameterComponent::EnvelopeParameterComponent(AudioProcessorValueTreeState& vts, int index, const String& envName)
 	:m_vts(vts), somethingChanged(nullptr), m_name(envName), m_index(index),

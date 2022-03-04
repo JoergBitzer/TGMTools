@@ -12,11 +12,37 @@ version 1.2 level parameter JB 28.06.2020
 
 #include <vector>
 #include <math.h>
+#include <atomic>
+#include <JuceHeader.h>
 
 #define ENV_LABEL_WIDTH 60
 #define ENV_ROTARY_WIDTH 60
 #define ENV_MIN_DISTANCE 5
 #define ENV_LABEL_HEIGHT 20
+
+class EnvelopeParameter
+{
+public:
+	int addParameter(std::vector < std::unique_ptr<RangedAudioParameter>>& paramVector, int instance);
+    int connectParameter(AudioProcessorValueTreeState* vts, int instance);	
+
+    std::atomic<float>* m_delay;
+    float m_delayOld;
+    std::atomic<float>* m_attack;
+    float m_attackOld;
+    std::atomic<float>* m_hold;
+    float m_holdOld;
+    std::atomic<float>* m_decay;
+    float m_decayOld;
+    std::atomic<float>* m_sustain;
+    float m_sustainOld;
+    std::atomic<float>* m_release;
+    float m_releaseOld;
+    std::atomic<float>* m_level;
+    float m_levelOld;
+    std::atomic<float>* m_inverted;
+    float m_invertedOld;
+};
 
 
 class Envelope
@@ -28,8 +54,7 @@ public:
 		Delay,
 		Attack,
 		Hold,
-		Decay,
-		Sustain,
+		Decay, // sustain is not a phase
 		Release,
 	};
 	Envelope();
@@ -105,7 +130,8 @@ public:
 		else
 			return m_maxLevel*m_envGain;
 	}
-
+	int updateParameter();
+	EnvelopeParameter m_envparams;
 protected:
 	void updateTimeConstants(void);
 	bool m_invertOn;
@@ -137,7 +163,6 @@ protected:
 };
 
 #ifdef USE_JUCE
-#include <JuceHeader.h>
 // several IDs to allow more than one instance
 #define MAX_ENV_INSTANCES 4
 const struct
@@ -222,29 +247,6 @@ const struct
 }paramEnvInvert;
 
 
-class EnvelopeParameter
-{
-public:
-	int addParameter(std::vector < std::unique_ptr<RangedAudioParameter>>& paramVector, int instance);
-
-public:
-    std::atomic<float>* m_delay;
-    float m_delayOld;
-    std::atomic<float>* m_attack;
-    float m_attackOld;
-    std::atomic<float>* m_hold;
-    float m_holdOld;
-    std::atomic<float>* m_decay;
-    float m_decayOld;
-    std::atomic<float>* m_sustain;
-    float m_sustainOld;
-    std::atomic<float>* m_release;
-    float m_releaseOld;
-    std::atomic<float>* m_level;
-    float m_levelOld;
-    std::atomic<float>* m_inverted;
-    float m_invertedOld;
-};
 
 typedef AudioProcessorValueTreeState::SliderAttachment SliderAttachment;
 typedef AudioProcessorValueTreeState::ComboBoxAttachment ComboAttachment;
