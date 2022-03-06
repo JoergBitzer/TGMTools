@@ -6,16 +6,17 @@ Envelope::Envelope()
 	m_fs = 1.0;
 
 	// initial values
-	m_delTime_ms = 0.0;
-	m_tauAtt_ms	= 0.1;
-	m_tauDec_ms	= 0.1;
+	m_delTime_ms = paramEnvDelay.defaultValue;
+	m_tauAtt_ms	= exp(paramEnvAttack.defaultValue);
+	m_tauDec_ms	= exp(paramEnvDecay.defaultValue);
 	m_attOver = 1.0 / 0.77; // from Will Pirkle Book
-	m_holdTime_ms = 0.0;
-	m_tauRel_ms	= 0.1;
-	m_sustainLevel = 1.0;
-	m_maxLevel = 1.0;
-	m_invertOn = false;
+	m_holdTime_ms = paramEnvHold.defaultValue;
+	m_tauRel_ms	= exp(paramEnvRelease.defaultValue);
+	m_sustainLevel = paramEnvSustain.defaultValue;
+	m_maxLevel = paramEnvLevel.defaultValue;
+	m_invertOn = paramEnvInvert.defaultValue;
 	m_envelopePhase = envelopePhases::Off;
+	m_envGain = 0.f;
 	updateTimeConstants();
 	reset();
 }
@@ -279,6 +280,7 @@ EnvelopeParameterComponent::EnvelopeParameterComponent(AudioProcessorValueTreeSt
 	m_EnvAttackAttachment = std::make_unique<SliderAttachment>(m_vts, paramEnvAttack.ID[m_index], m_EnvAttackSlider);
 	addAndMakeVisible(m_EnvAttackSlider);
 	m_EnvAttackSlider.onValueChange = [this]() {if (somethingChanged != nullptr) somethingChanged(); };
+	//m_EnvAttackSlider.setValue(paramEnvAttack.defaultValue,NotificationType::sendNotification);
 
 	m_EnvHoldLabel.setText("Hold", NotificationType::dontSendNotification);
 	m_EnvHoldLabel.setJustificationType(Justification::centred);

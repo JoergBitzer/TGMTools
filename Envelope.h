@@ -173,6 +173,9 @@ const struct
 	float minValue = 0.f;
 	float maxValue = 250.f;
 	float defaultValue = 0.f;
+    bool isModulationTarget = true;
+    bool isModulationSource = false;
+
 }paramEnvDelay;
 
 const struct
@@ -183,6 +186,8 @@ const struct
 	float minValue = 0.f;
 	float maxValue = 250.f;
 	float defaultValue = 0.f;
+    bool isModulationTarget = true;
+    bool isModulationSource = false;
 }paramEnvHold;
 
 const struct
@@ -193,6 +198,8 @@ const struct
 	float minValue = 0.f;
 	float maxValue = 1.f;
 	float defaultValue = 1.f;
+    bool isModulationTarget = true;
+    bool isModulationSource = false;
 }paramEnvSustain;
 
 
@@ -203,7 +210,9 @@ const struct
 	std::string unitName = "ms";
 	float minValue = log(0.1f);
 	float maxValue = log(10000.f);
-	float defaultValue = log(50.f);
+	float defaultValue = log(150.f);
+    bool isModulationTarget = true;
+    bool isModulationSource = false;
 }paramEnvAttack;
 
 const struct
@@ -214,6 +223,8 @@ const struct
 	float minValue = log(10.f);
 	float maxValue = log(10000.f);
 	float defaultValue = log(150.f);
+    bool isModulationTarget = true;
+    bool isModulationSource = false;
 }paramEnvDecay;
 
 const struct
@@ -224,6 +235,8 @@ const struct
 	float minValue = log(10.0f);
 	float maxValue = log(10000.f);
 	float defaultValue = log(150.f);
+    bool isModulationTarget = true;
+    bool isModulationSource = false;
 }paramEnvRelease;
 
 const struct
@@ -231,9 +244,11 @@ const struct
 	const std::string ID[MAX_ENV_INSTANCES] = { "Env1Level", "Env2Level", "Env3Level", "Env4Level" };
 	std::string name = "EnvLevel";
 	std::string unitName = "";
-	float minValue = -90.f;
-	float maxValue = 0.f;
-	float defaultValue = 0.f;
+	float minValue = 0.f;
+	float maxValue = 1.f;
+	float defaultValue = 1.f;
+    bool isModulationTarget = true;
+    bool isModulationSource = false;
 }paramEnvLevel;
 
 const struct
@@ -244,6 +259,8 @@ const struct
 	bool minValue = false;
 	bool maxValue = true;
 	bool defaultValue = false;
+    bool isModulationTarget = false;
+    bool isModulationSource = false;
 }paramEnvInvert;
 
 
