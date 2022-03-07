@@ -14,6 +14,7 @@ version 1.2 level parameter JB 28.06.2020
 #include <math.h>
 #include <atomic>
 #include <JuceHeader.h>
+#include "ModulationMatrix.h"
 
 #define ENV_LABEL_WIDTH 60
 #define ENV_ROTARY_WIDTH 60
@@ -74,6 +75,7 @@ public:
 	void reset()
 	{
 		m_envGain = 0.0;
+		m_envOut = 0.0;
 		m_envelopePhase = envelopePhases::Off;
 		m_sampleCounter = 0.0;
 	}
@@ -125,13 +127,43 @@ public:
 			break;
 
 		}
-		if (m_invertOn)
-			return m_maxLevel * (1.0-m_envGain);
-		else
-			return m_maxLevel*m_envGain;
+		m_envInvertOut = m_maxLevel * (1.0-m_envGain);
+		m_envOut =  m_maxLevel*m_envGain;
+
+		return m_envOut;
 	}
 	int updateParameter();
 	EnvelopeParameter m_envparams;
+	void setEnvelopeName (std::string name)
+	{
+		m_envName = name;
+	}
+	float getEnvelopeOutput(){return m_envOut;};
+	float getEnvelopeInvertedOutput(){return m_envInvertOut;};
+	int getNrOfModulationSources(){return 2;};
+	int getNrOfModulationTargets(){return 0;};
+	std::string getSourceModulationID(int modSourceNumber)
+	{
+		if (modSourceNumber == 0)
+			return (m_envName+"Out");
+		if (modSourceNumber == 1)
+			return (m_envName+"InvOut");
+	}
+	std::string getTargetModulationID(int modTargetNumber)
+	{
+		return "None";
+	}
+
+    void getModulationFunction(ModulationMatrix::MatrixEntry & newentry, std::string ID)
+    {
+		if (ID == (m_envName+"Out"))
+        	newentry.getModulation = [this](){return getEnvelopeOutput();};
+
+		if (ID == (m_envName+"InvOut"))
+        	newentry.getModulation = [this](){return getEnvelopeInvertedOutput();};
+
+    }
+
 protected:
 	void updateTimeConstants(void);
 	bool m_invertOn;
@@ -157,9 +189,12 @@ protected:
 
 	envelopePhases m_envelopePhase;
 	double m_envGain;
+	double m_envOut;
+	double m_envInvertOut;
 
 	int m_sampleCounter;
 	double m_maxLevel;
+	std::string m_envName;
 };
 
 #ifdef USE_JUCE

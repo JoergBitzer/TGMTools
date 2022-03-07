@@ -3,6 +3,7 @@
 
 Envelope::Envelope()
 {
+	m_envName = "Env";
 	m_fs = 1.0;
 
 	// initial values
@@ -17,6 +18,7 @@ Envelope::Envelope()
 	m_invertOn = paramEnvInvert.defaultValue;
 	m_envelopePhase = envelopePhases::Off;
 	m_envGain = 0.f;
+	m_envOut = 0.f;
 	updateTimeConstants();
 	reset();
 }
@@ -148,7 +150,7 @@ int Envelope::updateParameter()
         m_envparams.m_levelOld = newval;
         setMaxLevel(newval);
     }
-
+	return 0;
 
 }
 
@@ -249,7 +251,7 @@ int EnvelopeParameter::connectParameter(AudioProcessorValueTreeState* vts, int i
     m_levelOld = *m_level;
     m_inverted = vts->getRawParameterValue(paramEnvInvert.ID[instance]);
     m_invertedOld = *m_inverted;     
-
+	return 0;
 }
 
 
