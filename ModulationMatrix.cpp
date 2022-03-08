@@ -7,6 +7,7 @@ ModulationMatrix::ModulationMatrix()
 }
 void ModulationMatrix::updateModulation()
 {
+    m_protect.enter();
     std::list<MatrixEntry>::iterator it = m_modulationList.begin();
     if (m_modulationList.size()> 1)
         it++; //points to the next element in the list
@@ -36,10 +37,11 @@ void ModulationMatrix::updateModulation()
         }
         
     }
-
+    m_protect.exit();
 }
 int ModulationMatrix::addListEntry(MatrixEntry newentry)
 {
+    m_protect.enter();
     if (newentry.getModulation != nullptr && newentry.setModulation != nullptr)
     {
         newentry.ID = IDcounter++;
@@ -56,7 +58,21 @@ int ModulationMatrix::addListEntry(MatrixEntry newentry)
         if (it == m_modulationList.end())
             m_modulationList.push_back(newentry);
 
+        m_protect.exit();
         return newentry.ID;
     }
+    m_protect.exit();
     return -1;
+}
+int ModulationMatrix::removeListEntry(int ID)
+{
+    m_protect.enter();
+    for (std::list<MatrixEntry>::iterator it = m_modulationList.begin(); it != m_modulationList.end();)
+    {
+        if (it->ID == ID)
+            it = m_modulationList.erase(it);
+        
+        it++;
+    }
+    m_protect.exit();
 }
