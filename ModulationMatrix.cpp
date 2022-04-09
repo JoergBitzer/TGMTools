@@ -13,6 +13,7 @@ void ModulationMatrix::updateModulation()
         it++; //points to the next element in the list
     
     float modval = 0.f;
+    int CombinationCounter = 0;
     for (auto matrixentry : m_modulationList)
     {
         float value = matrixentry.getModulation();
@@ -22,18 +23,63 @@ void ModulationMatrix::updateModulation()
         {
             if (matrixentry.targetID == it->targetID )
             {
-                modval += value;
+                if (matrixentry.isMultiplicative)
+                {
+                    if (CombinationCounter == 0)
+                        modval = 1.0;
+                    
+                    if (matrixentry.isActive)
+                        modval *= value;
+                }
+                else
+                {
+                    if (matrixentry.isActive)
+                        modval += value;
+                }
+
+                CombinationCounter++;
             }
             else
             {
-                matrixentry.setModulation(value + modval);
+                if (matrixentry.isMultiplicative)
+                {
+                    if (CombinationCounter == 0)
+                        modval = 1.0;
+                    
+                    if (matrixentry.isActive)
+                        modval *= value; 
+                    
+                    matrixentry.setModulation(modval);
+                }
+                else
+                {
+                    if (matrixentry.isActive)
+                        modval += value;
+                    matrixentry.setModulation(modval);
+                }
                 modval = 0.f;
+                CombinationCounter = 0;
             }
             it++;            
         }
         else
         {
-            matrixentry.setModulation(value + modval);
+            if (matrixentry.isMultiplicative)
+            {
+                if (CombinationCounter == 0)
+                    modval = 1.0;
+                
+                if (matrixentry.isActive)
+                    modval *= value; 
+                
+                matrixentry.setModulation(modval);
+            }
+            else
+            {
+                if (matrixentry.isActive)
+                    modval += value;
+                matrixentry.setModulation(modval);
+            }
         }
         
     }

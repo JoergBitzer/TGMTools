@@ -148,19 +148,28 @@ public:
 			return (m_envName+"Out");
 		if (modSourceNumber == 1)
 			return (m_envName+"InvOut");
+
+		return "";
 	}
 	std::string getTargetModulationID(int modTargetNumber)
 	{
+		juce::ignoreUnused(modTargetNumber);
 		return "None";
 	}
 
-    void getModulationFunction(ModulationMatrix::MatrixEntry & newentry, std::string ID)
-    {
+    int getModulationFunction(ModulationMatrix::MatrixEntry & newentry, std::string ID)
+	{
 		if (ID == (m_envName+"Out"))
+		{
         	newentry.getModulation = [this](){return getEnvelopeOutput();};
-
+			return 0;
+		}
 		if (ID == (m_envName+"InvOut"))
+		{
         	newentry.getModulation = [this](){return getEnvelopeInvertedOutput();};
+			return 0;
+		}
+		return -1;
 
     }
 

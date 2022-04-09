@@ -257,8 +257,8 @@ int EnvelopeParameter::connectParameter(AudioProcessorValueTreeState* vts, int i
 
 
 EnvelopeParameterComponent::EnvelopeParameterComponent(AudioProcessorValueTreeState& vts, int index, const String& envName)
-	:m_vts(vts), somethingChanged(nullptr), m_name(envName), m_index(index),
-	m_style(EnvelopeStyle::horizontal), m_showdelay(false),m_showlevel(false),m_ScaleFactor(1.f),m_showhold(false)
+	:somethingChanged(nullptr), m_vts(vts),   m_index(index),m_name(envName),
+	m_style(EnvelopeStyle::horizontal), m_showdelay(false),m_showhold(false),m_showlevel(false),m_ScaleFactor(1.f)
 {
 
 	m_EnvDelayLabel.setText("Delay", NotificationType::dontSendNotification);
