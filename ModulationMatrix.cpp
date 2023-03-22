@@ -121,4 +121,5 @@ int ModulationMatrix::removeListEntry(int ID)
         it++;
     }
     m_protect.exit();
+    return 0;
 }
