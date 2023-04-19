@@ -4,7 +4,7 @@
  * @author J. Bitzer @ TGM @ Jade Hochschule
  * @brief This template class is a second order section filter, It provides clickfree time variant processing
  * the smoothing is done via blending not via morphing (fast, but sonically sub-optimal)
- * @version 0.8
+ * @version 0.8.2
  * @date 2021-05-22
  * 
  * @copyright Copyright (c) 2021 Licence: BSD 3-clause
@@ -13,6 +13,9 @@
 /* ToDO:
 	1) non lienarities with different Forms (clip, tanh)
 //*/
+/* Changes:
+	0.8.2) new interface for float* or double* process routine
+*/
 #include <vector>
 template <class T> class SOSFilter
 {
@@ -36,12 +39,9 @@ public:
         m_b0 = b0; m_b1 = b1; m_b2 = b2; m_a1 = a1; m_a2 = a2;
         m_newCoeffs = true; m_xFadeCounter = 0; m_CrossGain = 0.0;};
 	
-	int processData(std::vector<T>& in, std::vector<T>& out)
+	int processData(T* in, T* out, int nrofsamples)
     {
-	    if (in.size() != out.size())
-		    return -1;
-
-	    for (unsigned int kk = 0; kk < in.size(); kk++)
+	    for (unsigned int kk = 0; kk < nrofsamples; kk++)
 	    {
             T curSample = in[kk];
 			out[kk] = m_b0*curSample + m_b1*m_stateb1 + m_b2*m_stateb2 - m_a1*m_statea1 - m_a2*m_statea2;
@@ -62,18 +62,25 @@ public:
 
 	    return 0;
     };
-	int processDataTV(std::vector<T>& in, std::vector<T>& out)
+	int processData(std::vector<T>& in, std::vector<T>& out)
     {
 	    if (in.size() != out.size())
 		    return -1;
 
+		T* indata = in.data();
+		T* outdata = out.data();
+		return processData(indata, outdata, in.size());
+    };
+
+	int processDataTV(T* in, T* out, int nrofsamples)
+    {
 	    if (m_newCoeffs == false)
 	    {
-		    processData(in, out);
+		    processData(in, out, nrofsamples);
 	    }
 	    else // TV cross fade audio
 	    {
-		    for (unsigned int kk = 0; kk < in.size(); kk++)
+		    for (unsigned int kk = 0; kk < nrofsamples; kk++)
 		    {
 			    T newOut = 0.0;
 			    T oldOut = 0.0;
@@ -116,11 +123,19 @@ public:
 				    out[kk] = newOut;
 				    m_newCoeffs = false;
 			    }
-		}
+			}
 		
-	}
+		}
+		return 0;        
+    }
+	int processDataTV(std::vector<T>& in, std::vector<T>& out)
+    {
+	    if (in.size() != out.size())
+		    return -1;
 
-	return 0;        
+		T* indata = in.data();
+		T* outdata = out.data();
+		return processDataTV(indata, outdata, in.size());
     }
 	int setXFadeSamples(int nrofsamples)
     {
@@ -131,7 +146,7 @@ public:
 	    return 0;
     }
 
-	void setClipValue (T clipval){m_clipVal = clipVal;};
+	void setClipValue (T clipval){m_clipVal = clipval;};
 private:
     T m_b0,m_b1,m_b2;
     T m_a1,m_a2;
