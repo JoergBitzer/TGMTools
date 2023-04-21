@@ -12,7 +12,7 @@
 // #include "BinaryData.h"
 
 PresetHandler::PresetHandler()
-	:hasCategories(false)
+	:hasCategories(false),m_curPresetName("Init")
 {
 	m_categoryList.push_back("Unknown"); // default is None
 }
@@ -65,6 +65,7 @@ int PresetHandler::addOrChangeCurrentPreset(String name, String category, String
 	auto state = m_vts->copyState();
 	m_presetList.insert_or_assign(name, state);
 	savePreset(name, category, bank);
+	m_curPresetName = name;
 
 	return 0;
 }
@@ -213,6 +214,7 @@ int PresetHandler::loadPresetAndActivate(String name)
 {
 	ValueTree vt = loadPreset(name);
 	m_vts->replaceState(vt);
+	m_curPresetName = name;
 	return 0;
 }
 
@@ -329,7 +331,21 @@ PresetComponent::PresetComponent(PresetHandler& ph)
 	buildPresetCombo();
 
 	m_presetCombo.onChange = [this]() {itemchanged(); };
-	m_presetCombo.setSelectedItemIndex(0, NotificationType::sendNotificationAsync);
+
+	String curPresetName = m_presetHandler.getCurrentPresetName();
+	auto numItems = m_presetCombo.getNumItems();
+	int startItem = 0;
+	for (auto kk = 0; kk < numItems; kk++)
+	{
+		String itemname = m_presetCombo.getItemText(kk);
+		if (itemname == curPresetName)
+		{
+			startItem = kk;
+			break;
+		}
+	}
+
+	m_presetCombo.setSelectedItemIndex(startItem, NotificationType::dontSendNotification);
 	m_presetCombo.isTextEditable();
 	m_presetCombo.setEditableText(true);
 	m_presetCombo.setColour(ComboBox::ColourIds::backgroundColourId, JadeGray);

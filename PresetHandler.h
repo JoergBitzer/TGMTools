@@ -95,7 +95,8 @@ public:
 	void addCategory(StringArray newCat);
 	bool gethasCategories(){return hasCategories;};
 	std::vector<String> m_categoryList;
-
+	String getCurrentPresetName(){return m_curPresetName;};
+	void setCurrentPresetName(String newName){m_curPresetName = newName;};
 // Factory Presets 
 #ifdef FACTORY_PRESETS
 	void DeployFactoryPresets();
@@ -103,7 +104,7 @@ public:
 private:
 	AudioProcessorValueTreeState* m_vts;
 	std::map <String, ValueTree> m_presetList;
-
+	String m_curPresetName;
 	bool hasCategories;
 
 	void repairCategory(ValueTree& vt)
