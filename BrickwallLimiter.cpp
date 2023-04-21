@@ -163,7 +163,16 @@ template <class T> int BrickwallLimiter<T>::processSamples(std::vector<std::vect
             if (m_bypass)
                 data[cc][kk] = outVal;
             else
-                data[cc][kk] = outVal * m_Gain;
+            { 
+                float finalout = outVal * m_Gain;
+                if (finalout>=1.0)
+                    finalout = 1.0;
+                
+                if (finalout < -1.0)
+                    finalout = -1.0;
+
+                data[cc][kk] = finalout;
+            }
               
         }
     }
@@ -204,7 +213,17 @@ template <class T> int BrickwallLimiter<T>::processSamples(juce::AudioBuffer<T>&
             if (m_bypass)
                 writePointer[cc][kk] = outVal;
             else
-                writePointer[cc][kk] = outVal * m_Gain;
+            {   
+                float finalout = outVal * m_Gain;
+                if (finalout>=1.0)
+                    finalout = 1.0;
+                
+                if (finalout < -1.0)
+                    finalout = -1.0;
+
+                writePointer[cc][kk] = finalout;
+
+            }
         }
     
     
