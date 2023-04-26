@@ -33,7 +33,7 @@ public:
         m_statea1 = 0.0; m_statea2 = 0.0; m_stateb1 = 0.0; m_stateb2 = 0.0;
         m_statea1Old = 0.0; m_statea2Old = 0.0;};
 
-	int setCoeffs(T b0, T b1, T b2, T a1, T a2){
+	void setCoeffs(T b0, T b1, T b2, T a1, T a2){
         m_b0Old = m_b0; m_b1Old = m_b1; m_b2Old = m_b2; m_a1Old = m_a1; m_a2Old = m_a2;
         m_statea1Old = m_statea1; m_statea2Old = m_statea2;
         m_b0 = b0; m_b1 = b1; m_b2 = b2; m_a1 = a1; m_a2 = a2;
