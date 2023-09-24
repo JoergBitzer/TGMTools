@@ -38,7 +38,8 @@ void PresetHandler::addCategory(StringArray newCat)
 {
 	for (auto singleCat : newCat)
 	{
-		addCategory(singleCat);
+		if (singleCat.isNotEmpty())
+			addCategory(singleCat);
 	}
 }
 
