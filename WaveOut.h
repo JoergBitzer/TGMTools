@@ -13,6 +13,10 @@
 #include <string>
 #include <vector>
 #include <cmath>
+
+#ifdef USE_JUCE
+#include <juce_audio_basics/juce_audio_basics.h>
+#endif
 class WaveOut
 {
 public:
@@ -47,15 +51,18 @@ public:
     void write_file(float **data, int size, int channels);
     void write_file(const std::vector<float> &data);
     void write_file(const std::vector<std::vector<float> > &data);
+#ifdef USE_JUCE
+    void write_file(juce::AudioBuffer<float> data);
+#endif    
     inline void writeOneValue(float fvalue)
     {
         // saturate for integer formats 
         if (m_format == AudioFormat::INT16 || m_format == AudioFormat::INT24 || m_format == AudioFormat::INT32)
         {
-            if (fvalue >= 0.9999998) // this is just an approximation (1- Q)
-                fvalue = 0.9999998;
-            if (fvalue < -1.0)
-                fvalue = -1.0;
+            if (fvalue >= 0.9999998f) // this is just an approximation (1- Q)
+                fvalue = 0.9999998f;
+            if (fvalue < -1.f)
+                fvalue = -1.f;
         }
         if (m_format == AudioFormat::INT16)
         {
@@ -67,8 +74,8 @@ public:
             int32_t val = static_cast<int32_t>(fvalue * 8388607);
             char g[3];
             g[0] = val  & 0x000000ff;
-            g[1] = (val & 0x0000ff00) >> 8;
-            g[2] = (val & 0x00ff0000) >> 16;
+            g[1] = static_cast<char>((val & 0x0000ff00) >> 8);
+            g[2] = static_cast<char>((val & 0x00ff0000) >> 16);
             m_file.write(g, 3);
         }
 
@@ -96,6 +103,10 @@ public:
     void write(float **data, int size, int channels);
     void write(const std::vector<float> &data);
     void write(const std::vector<std::vector<float> > &data);
+#ifdef USE_JUCE
+    void write(juce::AudioBuffer<float> data);
+#endif
+
 
     void close();
     //bool isOpen();
