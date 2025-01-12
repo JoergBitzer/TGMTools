@@ -139,42 +139,13 @@ void WaveOut::write_file(juce::AudioBuffer<float> data)
             }
         }
         adjustDataSize(data.getNumSamples());
-        adjustDataSize(static_cast<int>(data.at(0).size()));
+        //adjustDataSize(static_cast<int>(data.at(0).size()));
         updateHeader();
         writeDataSize();
         m_file.close();
         m_isOpen = false;
     }
 }
-#ifdef USE_JUCE
-void WaveOut::write_file(juce::AudioBuffer<float> data)
-{
-    if (m_channels != data.getNumChannels())
-    {
-        // error
-        return;
-    }
-    m_file.open(m_filename, std::ios::binary | std::ios::out);
-    if (m_file.good())
-    {
-        m_isOpen = true;
-        writeHeader();
-        auto dataptrs = data.getArrayOfReadPointers();
-        for (int cc = 0; cc < data.getNumSamples(); cc++)
-        {
-            for (int ch = 0; ch < data.getNumChannels(); ch++)
-            {
-                writeOneValue(dataptrs[ch][cc]);
-            }
-        }
-        adjustDataSize(data.getNumSamples());
-        updateHeader();
-        writeDataSize();
-        m_file.close();
-        m_isOpen = false;
-    }
-}
-#endif
 #endif
 
 void WaveOut::open()
@@ -276,26 +247,6 @@ void WaveOut::write(juce::AudioBuffer<float> data)
 }
 #endif
 
-#ifdef USE_JUCE
-void WaveOut::write(juce::AudioBuffer<float> data)
-{
-    if (m_file.good())
-    {
-        writeHeader();
-        auto dataptrs = data.getArrayOfReadPointers();
-        for (int cc = 0; cc < data.getNumSamples(); cc++)
-        {
-            for (int ch = 0; ch < data.getNumChannels(); ch++)
-            {
-                writeOneValue(dataptrs[ch][cc]);
-            }
-        }
-        adjustDataSize(data.getNumSamples());
-        updateHeader();
-        writeDataSize();
-    }
-}
-#endif
 
 void WaveOut::close()
 {
@@ -350,7 +301,6 @@ void WaveOut::setAudioFormat(AudioFormat format)
 void WaveOut::writeHeader()
 {
     int currentPos = static_cast<int>(m_file.tellp());
-    int currentPos = static_cast<int>(m_file.tellp());
     m_file.seekp(0);
     m_file.write(reinterpret_cast<char*>(&m_header), sizeof(m_header));
     if (currentPos != 0)
@@ -359,7 +309,6 @@ void WaveOut::writeHeader()
 
 void WaveOut::writeDataSize()
 {
-    int currentPos = static_cast<int>(m_file.tellp());
     int currentPos = static_cast<int>(m_file.tellp());
     m_file.seekp(4);
     m_file.write(reinterpret_cast<char*>(&m_header.chunk_size), sizeof(m_header.chunk_size));
@@ -392,10 +341,8 @@ void WaveOut::updateHeader()
 void normalizeAudio(std::vector<float> &data, float TargetMaxVal_dB)
 {
     float max_val = 0.f;
-    float max_val = 0.f;
     for (auto &d : data)
     {
-        float abs_d = std::fabs(d);
         float abs_d = std::fabs(d);
         if (abs_d > max_val)
             max_val = abs_d;
